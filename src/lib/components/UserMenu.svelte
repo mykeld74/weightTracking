@@ -36,7 +36,7 @@
 		aria-expanded={open}
 		onclick={toggle}
 	>
-		{name}
+		<span class="user-name">{name}</span>
 		<svg viewBox="0 0 12 12" aria-hidden="true">
 			<path d="M2.5 4.5 L6 8 L9.5 4.5" fill="none" stroke="currentColor" stroke-linecap="round" />
 		</svg>
@@ -90,10 +90,25 @@
 		background: rgba(255, 255, 255, 0.05);
 	}
 
+	.user-name {
+		min-width: 0;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
 	.user-menu-trigger svg {
 		width: 12px;
 		height: 12px;
 		flex: none;
+	}
+
+	@media (max-width: 720px) {
+		.user-menu-trigger {
+			max-width: min(46vw, 180px);
+			padding: 4px 6px;
+			font-size: 0.88rem;
+		}
 	}
 
 	.user-menu-panel {

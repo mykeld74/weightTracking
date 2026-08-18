@@ -89,6 +89,7 @@
 		class="chart"
 		style:--chart-color={color}
 		viewBox="0 0 {width} {height}"
+		width="100%"
 		role="img"
 		aria-label="{field.label} trend"
 		onmousemove={onMove}
@@ -160,6 +161,7 @@
 <style>
 	.chart {
 		width: 100%;
+		max-width: 100%;
 		height: auto;
 		display: block;
 		overflow: visible;

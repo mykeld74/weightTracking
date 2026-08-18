@@ -119,14 +119,19 @@
 	}
 
 	.entry-chart {
+		width: 100%;
+		max-width: 100%;
+		min-width: 0;
 		max-height: min(560px, 70vh);
 		overflow: auto;
+		overscroll-behavior: contain;
 		border-radius: 12px;
 		background: var(--bg);
 	}
 
 	table {
-		width: 100%;
+		width: max-content;
+		min-width: 100%;
 		border-collapse: separate;
 		border-spacing: 0;
 		font-variant-numeric: tabular-nums;

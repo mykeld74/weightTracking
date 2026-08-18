@@ -2,6 +2,7 @@
 	import { page } from '$app/state';
 	import { resolve } from '$app/paths';
 	import BrandMark from '$lib/components/BrandMark.svelte';
+	import NavIcon from '$lib/components/NavIcon.svelte';
 	import UserMenu from '$lib/components/UserMenu.svelte';
 	import { isAdmin } from '$lib/tracking/users';
 
@@ -23,10 +24,30 @@
 			</span>
 		</a>
 		<nav class="tabs">
-			<a class={{ active: compositionActive }} href={resolve('/composition')}>Composition</a>
-			<a class={{ active: measurementsActive }} href={resolve('/measurements')}>Measurements</a>
-			<a class={{ active: photosActive }} href={resolve('/photos')}>Photos</a>
-			<a class={{ active: glp1Active }} href={resolve('/glp1')}>GLP-1</a>
+			<a
+				class={{ active: compositionActive }}
+				href={resolve('/composition')}
+				title="Composition"
+			>
+				<NavIcon name="composition" />
+				<span class="tab-label">Composition</span>
+			</a>
+			<a
+				class={{ active: measurementsActive }}
+				href={resolve('/measurements')}
+				title="Measurements"
+			>
+				<NavIcon name="measurements" />
+				<span class="tab-label">Measurements</span>
+			</a>
+			<a class={{ active: photosActive }} href={resolve('/photos')} title="Photos">
+				<NavIcon name="photos" />
+				<span class="tab-label">Photos</span>
+			</a>
+			<a class={{ active: glp1Active }} href={resolve('/glp1')} title="GLP-1">
+				<NavIcon name="glp1" />
+				<span class="tab-label">GLP-1</span>
+			</a>
 		</nav>
 		<div class="user-meta">
 			<UserMenu name={data.user.name} admin={isAdmin(data.user)} />
