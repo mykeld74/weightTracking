@@ -10,7 +10,7 @@
 </script>
 
 <svelte:head>
-	<title>Sign in · Body Ledger</title>
+	<title>Body Ledger · Sign in</title>
 </svelte:head>
 
 <div class="auth-shell">

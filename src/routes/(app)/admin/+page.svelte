@@ -23,7 +23,7 @@
 </script>
 
 <svelte:head>
-	<title>Accounts · Body Ledger</title>
+	<title>Body Ledger · Accounts</title>
 </svelte:head>
 
 <div class="page-grid">

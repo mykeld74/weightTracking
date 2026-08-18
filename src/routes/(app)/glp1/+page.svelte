@@ -35,7 +35,7 @@
 </script>
 
 <svelte:head>
-	<title>GLP-1 · Body Ledger</title>
+	<title>Body Ledger · GLP-1</title>
 </svelte:head>
 
 <div class="page-grid">

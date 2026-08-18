@@ -30,7 +30,7 @@
 </script>
 
 <svelte:head>
-	<title>Composition · Body Ledger</title>
+	<title>Body Ledger · Composition</title>
 </svelte:head>
 
 <div class="page-grid">

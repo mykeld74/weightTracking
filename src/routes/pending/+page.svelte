@@ -6,7 +6,7 @@
 </script>
 
 <svelte:head>
-	<title>Awaiting approval · Body Ledger</title>
+	<title>Body Ledger · Awaiting approval</title>
 </svelte:head>
 
 <div class="auth-shell">

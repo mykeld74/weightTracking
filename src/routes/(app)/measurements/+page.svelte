@@ -20,7 +20,7 @@
 </script>
 
 <svelte:head>
-	<title>Measurements · Body Ledger</title>
+	<title>Body Ledger · Measurements</title>
 </svelte:head>
 
 <div class="page-grid">

@@ -60,7 +60,7 @@
 </script>
 
 <svelte:head>
-	<title>Photos · Body Ledger</title>
+	<title>Body Ledger · Photos</title>
 </svelte:head>
 
 <div class="page-grid">
