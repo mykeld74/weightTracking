@@ -10,7 +10,10 @@ const securityHeaders: Record<string, string> = {
 	'X-Content-Type-Options': 'nosniff',
 	'Referrer-Policy': 'strict-origin-when-cross-origin',
 	'X-Frame-Options': 'DENY',
-	'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), interest-cohort=()'
+	// camera=(self): the progress-photo capture uses getUserMedia on this
+	// origin. A bare `camera=()` blocks it site-wide. Embedding is already
+	// prevented by frame-ancestors 'none' + X-Frame-Options.
+	'Permissions-Policy': 'camera=(self), microphone=(), geolocation=(), interest-cohort=()'
 };
 
 const handleBetterAuth: Handle = async ({ event, resolve }) => {

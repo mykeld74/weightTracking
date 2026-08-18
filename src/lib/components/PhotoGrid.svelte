@@ -34,10 +34,7 @@
 		return previewUrl[view] ?? (photos[view] ? photoSrc(photos[view]) : undefined);
 	}
 
-	function attachInput(
-		store: Partial<Record<PhotoView, HTMLInputElement>>,
-		view: PhotoView
-	) {
+	function attachInput(store: Partial<Record<PhotoView, HTMLInputElement>>, view: PhotoView) {
 		return (node: HTMLInputElement) => {
 			store[view] = node;
 			return () => {
@@ -82,7 +79,9 @@
 	function takePhoto(view: PhotoView, event: MouseEvent) {
 		event.stopPropagation();
 		pickerView = null;
-		if (!preferNativeCapture() && navigator.mediaDevices?.getUserMedia) {
+		// mediaDevices is undefined on insecure origins, so the guard matters at
+		// runtime even though TS types it as always present.
+		if (!preferNativeCapture() && typeof navigator.mediaDevices?.getUserMedia === 'function') {
 			cameraView = view;
 			return;
 		}

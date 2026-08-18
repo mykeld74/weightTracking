@@ -58,7 +58,9 @@ export function uniqueValues(
 	);
 }
 
-export function inferRegimens(entries: Glp1Entry[]): Array<{ medication: string; startedOn: string }> {
+export function inferRegimens(
+	entries: Glp1Entry[]
+): Array<{ medication: string; startedOn: string }> {
 	const chronological = [...entries].sort((a, b) => a.recordedOn.localeCompare(b.recordedOn));
 	const regimens: Array<{ medication: string; startedOn: string }> = [];
 	let current: string | null = null;
@@ -148,4 +150,3 @@ export function injectionChanges(
 
 	return changes;
 }
-

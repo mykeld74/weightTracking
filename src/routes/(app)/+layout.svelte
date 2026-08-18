@@ -24,11 +24,7 @@
 			</span>
 		</a>
 		<nav class="tabs">
-			<a
-				class={{ active: compositionActive }}
-				href={resolve('/composition')}
-				title="Composition"
-			>
+			<a class={{ active: compositionActive }} href={resolve('/composition')} title="Composition">
 				<NavIcon name="composition" />
 				<span class="tab-label">Composition</span>
 			</a>

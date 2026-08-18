@@ -7,11 +7,7 @@ import { metricFormError, readEntryId, readMetricValues, readRecordedOn } from '
 import { compositionFields } from '$lib/tracking/fields';
 import { parseMetricCsv } from '$lib/tracking/csv';
 import { requireApprovedUser } from '$lib/server/access';
-import {
-	csvImportResult,
-	importCompositionCsv,
-	readCsvText
-} from '$lib/server/importEntries';
+import { csvImportResult, importCompositionCsv, readCsvText } from '$lib/server/importEntries';
 
 export const load: PageServerLoad = async (event) => {
 	const user = requireApprovedUser(event);

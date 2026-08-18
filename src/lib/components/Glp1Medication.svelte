@@ -22,9 +22,7 @@
 	let calendarOpen = $state(false);
 	let pickedDate = $state<string | undefined>();
 	let startedOn = $derived(pickedDate ?? todayIsoDate());
-	let history = $derived(
-		[...regimens].sort((a, b) => b.startedOn.localeCompare(a.startedOn))
-	);
+	let history = $derived([...regimens].sort((a, b) => b.startedOn.localeCompare(a.startedOn)));
 
 	function beginSwitch() {
 		switching = true;
@@ -62,7 +60,12 @@
 				: 'Choose what you’re taking. You can switch later without losing past logs.'}
 		</p>
 		<div class="form-row">
-			<Combobox label="Medication" name="medication" options={medications} bind:value={medication} />
+			<Combobox
+				label="Medication"
+				name="medication"
+				options={medications}
+				bind:value={medication}
+			/>
 			{#if regimen}
 				<DatePicker
 					label="Starting"

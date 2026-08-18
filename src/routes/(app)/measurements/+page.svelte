@@ -11,6 +11,7 @@
 		filterEntries,
 		filterEntriesByWeekdays,
 		yearsInEntries,
+		type ChartGrain,
 		type PeriodSelection,
 		type WeekdayKey
 	} from '$lib/tracking/period';
@@ -23,6 +24,7 @@
 	let tableKeys = $derived(measurementFields.map((field) => field.key));
 	let period = $state<PeriodSelection>({ type: 'overall' });
 	let weekdays = $state<WeekdayKey[]>([]);
+	let grain = $state<ChartGrain>('day');
 	let years = $derived(yearsInEntries(data.entries));
 	let visibleEntries = $derived(filterEntries(data.entries, period));
 	let chartEntries = $derived(filterEntriesByWeekdays(visibleEntries, weekdays));
@@ -52,9 +54,20 @@
 				onSelect={(key) => (selectedKey = key)}
 			/>
 			<PeriodTabs {period} {years} onPeriod={(next) => (period = next)} />
-			<WeekdayTabs {weekdays} onWeekdays={(next) => (weekdays = next)} />
+			<WeekdayTabs
+				{weekdays}
+				{grain}
+				onWeekdays={(next) => (weekdays = next)}
+				onGrain={(next) => (grain = next)}
+			/>
 		</div>
-		<MetricCharts entries={chartEntries} fields={measurementFields} {selectedKeys} {includeYear} />
+		<MetricCharts
+			entries={chartEntries}
+			fields={measurementFields}
+			{selectedKeys}
+			{includeYear}
+			{grain}
+		/>
 	</section>
 
 	<section class="card" id="entry-form">

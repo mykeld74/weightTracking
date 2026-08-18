@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { cubicOut } from 'svelte/easing';
 	import { prefersReducedMotion, Tween } from 'svelte/motion';
-	import { formatAxisDate } from '$lib/tracking/dates';
+	import { addDaysIso, formatAxisDate, formatShortDate, weekStartIso } from '$lib/tracking/dates';
 	import {
 		frameFromPoints,
 		geometryFromFrame,
@@ -10,15 +10,18 @@
 	} from '$lib/tracking/chartMotion';
 	import { computeRangeStats, type ChartPoint } from '$lib/tracking/stats';
 	import { chartColorFor, formatFieldValue, type FieldDef } from '$lib/tracking/fields';
+	import type { ChartGrain } from '$lib/tracking/period';
 
 	let {
 		points,
 		field,
-		markers = []
+		markers = [],
+		grain = 'day'
 	}: {
 		points: ChartPoint[];
 		field: FieldDef;
 		markers?: Array<{ date: string; label: string }>;
+		grain?: ChartGrain;
 	} = $props();
 
 	const uid = $props.id();
@@ -80,6 +83,14 @@
 		if (Math.abs(stats.high) >= 20) return value.toFixed(0);
 		return value.toFixed(field.decimals);
 	}
+
+	function hoverLabel(date: string) {
+		if (grain !== 'week') return formatAxisDate(date, true);
+		const start = weekStartIso(date);
+		const end = addDaysIso(start, 6);
+		const showYear = start.slice(0, 4) !== end.slice(0, 4);
+		return `${formatShortDate(start, showYear)} – ${formatShortDate(end, true)}`;
+	}
 </script>
 
 {#if !stats || !geometry}
@@ -91,7 +102,7 @@
 		viewBox="0 0 {width} {height}"
 		width="100%"
 		role="img"
-		aria-label="{field.label} trend"
+		aria-label="{field.label} {grain === 'week' ? 'weekly average' : 'trend'}"
 		onmousemove={onMove}
 		onmouseleave={() => (hoverIndex = null)}
 	>
@@ -149,7 +160,7 @@
 				y={Math.max(16, hover.y - 12)}
 				text-anchor={hover.x > width - 160 ? 'end' : hover.x < 160 ? 'start' : 'middle'}
 			>
-				{formatAxisDate(hover.date, true)} · {formatFieldValue(hover.value, field)}
+				{hoverLabel(hover.date)} · {formatFieldValue(hover.value, field)}
 			</text>
 		{/if}
 	</svg>

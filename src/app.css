@@ -388,15 +388,26 @@ select:focus {
 		padding-bottom: 8px;
 	}
 
-	.history-filters > .period-tabs ~ .period-tabs {
+	.history-filters > .period-tabs:not(.metric-tabs):not(.weekday-tabs) {
+		order: 1;
+	}
+
+	.history-filters .weekday-tabs {
+		order: 2;
 		padding-left: 24px;
 		margin-left: 24px;
 		border-left: 1px solid var(--line);
 	}
 
+	.history-filters .metric-tabs {
+		order: 3;
+		flex: 1 1 100%;
+		border-top: 1px solid var(--line);
+	}
+
 	.history-filters .period-custom {
 		flex: 1 1 100%;
-		order: 1;
+		order: 4;
 		margin-top: 8px;
 		margin-bottom: 8px;
 	}

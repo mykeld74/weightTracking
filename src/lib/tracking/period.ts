@@ -38,6 +38,8 @@ export const weekdayOptions = [
 
 export type WeekdayKey = (typeof weekdayOptions)[number]['key'];
 
+export type ChartGrain = 'day' | 'week';
+
 export function weekdayFromIso(isoDate: string): WeekdayKey | null {
 	const day = new Date(`${isoDate}T00:00:00`).getDay();
 	if (!Number.isInteger(day) || day < 0 || day > 6) return null;

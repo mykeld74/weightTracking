@@ -90,7 +90,13 @@
 
 <svelte:window onkeydown={onKey} />
 
-<div class="camera-overlay" role="dialog" aria-modal="true" aria-label="Take {label} photo" {@attach attachCamera}>
+<div
+	class="camera-overlay"
+	role="dialog"
+	aria-modal="true"
+	aria-label="Take {label} photo"
+	{@attach attachCamera}
+>
 	<div class="camera-card">
 		<p class="camera-title">{label}</p>
 		{#if error}

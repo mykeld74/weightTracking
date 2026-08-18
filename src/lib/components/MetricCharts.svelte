@@ -1,26 +1,30 @@
 <script lang="ts">
 	import LineChart from './LineChart.svelte';
 	import { formatShortDate } from '$lib/tracking/dates';
-	import { computeRangeStats, pointsForField } from '$lib/tracking/stats';
+	import { computeRangeStats, pointsForField, weeklyAveragePoints } from '$lib/tracking/stats';
 	import type { FieldDef, TrackingEntry } from '$lib/tracking/fields';
+	import type { ChartGrain } from '$lib/tracking/period';
 
 	let {
 		entries,
 		fields,
 		selectedKeys,
 		includeYear = true,
-		markers = []
+		markers = [],
+		grain = 'day'
 	}: {
 		entries: TrackingEntry[];
 		fields: readonly FieldDef[];
 		selectedKeys: string[];
 		includeYear?: boolean;
 		markers?: Array<{ date: string; label: string }>;
+		grain?: ChartGrain;
 	} = $props();
 
 	let selectedFields = $derived(fields.filter((field) => selectedKeys.includes(field.key)));
 	let field = $derived(selectedFields[0]);
-	let points = $derived(field ? pointsForField(entries, field.key) : []);
+	let dailyPoints = $derived(field ? pointsForField(entries, field.key) : []);
+	let points = $derived(grain === 'week' ? weeklyAveragePoints(dailyPoints) : dailyPoints);
 	let stats = $derived(computeRangeStats(points));
 
 	function signedValue(value: number, field: FieldDef) {
@@ -67,12 +71,12 @@
 					<article class="summary-card avg">
 						<span>Avg</span>
 						<strong class="numeric">{stats.average.toFixed(field.decimals)}</strong>
-						<small>{stats.count} entries</small>
+						<small>{stats.count} {grain === 'week' ? 'weeks' : 'entries'}</small>
 					</article>
 				</div>
 			{/if}
 			<div class="chart-shell">
-				<LineChart {points} {field} {markers} />
+				<LineChart {points} {field} {markers} {grain} />
 			</div>
 		</section>
 	</div>

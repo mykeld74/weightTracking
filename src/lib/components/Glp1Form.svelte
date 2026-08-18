@@ -33,7 +33,13 @@
 	let location = $derived(locationEdit ?? defaultLocation);
 
 	function afterSave() {
-		return async ({ result, update }: { result: { type: string }; update: (opts?: { reset: boolean }) => Promise<void> }) => {
+		return async ({
+			result,
+			update
+		}: {
+			result: { type: string };
+			update: (opts?: { reset: boolean }) => Promise<void>;
+		}) => {
 			await update({ reset: false });
 			if (result.type !== 'success') return;
 			doseEdit = undefined;

@@ -42,7 +42,9 @@
 
 	function openList() {
 		open = true;
-		const exact = choices.findIndex((choice) => choice.value.toLowerCase() === value.trim().toLowerCase());
+		const exact = choices.findIndex(
+			(choice) => choice.value.toLowerCase() === value.trim().toLowerCase()
+		);
 		highlight = exact >= 0 ? exact : 0;
 	}
 

@@ -114,6 +114,19 @@ export function toIsoDate(year: number, month: number, day: number): string {
 	return `${nextYear}-${nextMonth}-${nextDay}`;
 }
 
+export function addDaysIso(isoDate: string, days: number): string {
+	const parsed = new Date(`${isoDate}T00:00:00`);
+	parsed.setDate(parsed.getDate() + days);
+	return toIsoDate(parsed.getFullYear(), parsed.getMonth() + 1, parsed.getDate());
+}
+
+/** Sunday-start week, matching the weekday tabs. */
+export function weekStartIso(isoDate: string): string {
+	const parsed = new Date(`${isoDate}T00:00:00`);
+	parsed.setDate(parsed.getDate() - parsed.getDay());
+	return toIsoDate(parsed.getFullYear(), parsed.getMonth() + 1, parsed.getDate());
+}
+
 export function shiftMonth(
 	year: number,
 	month: number,

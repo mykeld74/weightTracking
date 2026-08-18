@@ -41,7 +41,7 @@
 	}
 </script>
 
-<details class="csv-import" {...(message ? { open: true } : {})}>
+<details class="csv-import" {...message ? { open: true } : {}}>
 	<summary>Import CSV</summary>
 	<p class="hint">
 		One row per date. Use <code>recordedOn</code> or <code>date</code>, plus any of the field
@@ -53,13 +53,7 @@
 	<form method="post" action="?/importCsv" enctype="multipart/form-data" use:enhance={afterImport}>
 		<label class="file-field">
 			<span class="file-btn">Choose CSV</span>
-			<input
-				type="file"
-				name="csv"
-				accept=".csv,text/csv,text/plain"
-				required
-				onchange={onFile}
-			/>
+			<input type="file" name="csv" accept=".csv,text/csv,text/plain" required onchange={onFile} />
 			<span class="file-name">{fileLabel}</span>
 		</label>
 		<button class="primary-btn" type="submit" disabled={importing}>

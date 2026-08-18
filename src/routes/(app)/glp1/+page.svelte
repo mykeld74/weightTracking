@@ -46,12 +46,7 @@
 				<p>Saved as your current medication until you switch.</p>
 			</div>
 		</div>
-		<Glp1Medication
-			{regimen}
-			regimens={data.regimens}
-			{medications}
-			message={medicationMessage}
-		/>
+		<Glp1Medication {regimen} regimens={data.regimens} {medications} message={medicationMessage} />
 	</section>
 
 	{#if regimen}
@@ -59,7 +54,9 @@
 			<div class="section-head">
 				<div>
 					<h2>Log an injection</h2>
-					<p>Dose starts from your last shot. The site flips to the other side for the next week.</p>
+					<p>
+						Dose starts from your last shot. The site flips to the other side for the next week.
+					</p>
 				</div>
 			</div>
 			<Glp1Form

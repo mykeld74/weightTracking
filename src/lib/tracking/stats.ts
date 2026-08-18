@@ -1,3 +1,5 @@
+import { weekStartIso } from './dates';
+
 export type RangeStats = {
 	high: number;
 	highDate: string;
@@ -56,4 +58,26 @@ export function pointsForField(entries: Array<Record<string, unknown>>, key: str
 	}
 
 	return points.sort((a, b) => a.date.localeCompare(b.date));
+}
+
+/** One point per Sunday–Saturday week, plotted on the last day logged that week. */
+export function weeklyAveragePoints(points: ChartPoint[]): ChartPoint[] {
+	const groups = new Map<string, ChartPoint[]>();
+
+	for (const point of points) {
+		const weekStart = weekStartIso(point.date);
+		const group = groups.get(weekStart);
+		if (group) group.push(point);
+		else groups.set(weekStart, [point]);
+	}
+
+	return [...groups.entries()]
+		.sort(([left], [right]) => left.localeCompare(right))
+		.map(([, group]) => {
+			const sum = group.reduce((total, point) => total + point.value, 0);
+			return {
+				date: group[group.length - 1].date,
+				value: sum / group.length
+			};
+		});
 }
