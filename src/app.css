@@ -363,6 +363,45 @@ select:focus {
 	margin-bottom: 22px;
 }
 
+@media (min-width: 721px) {
+	.history-filters {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: flex-end;
+		border-bottom: 1px solid var(--line);
+		margin: 4px 0 18px;
+	}
+
+	.history-filters .period-tabs {
+		margin: 0;
+		border-bottom: none;
+		gap: 8px 20px;
+	}
+
+	.history-filters .period-tabs:last-of-type {
+		margin-bottom: 0;
+	}
+
+	.history-filters .period-tabs > button,
+	.history-filters .metric-more > button {
+		padding-top: 6px;
+		padding-bottom: 8px;
+	}
+
+	.history-filters > .period-tabs ~ .period-tabs {
+		padding-left: 24px;
+		margin-left: 24px;
+		border-left: 1px solid var(--line);
+	}
+
+	.history-filters .period-custom {
+		flex: 1 1 100%;
+		order: 1;
+		margin-top: 8px;
+		margin-bottom: 8px;
+	}
+}
+
 .period-tabs > button,
 .metric-more > button {
 	appearance: none;
@@ -405,7 +444,6 @@ select:focus {
 .metric-menu {
 	position: absolute;
 	top: calc(100% + 8px);
-	left: 0;
 	z-index: 8;
 	min-width: 220px;
 	padding: 6px;

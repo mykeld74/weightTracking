@@ -1,9 +1,10 @@
 import { fail } from '@sveltejs/kit';
-import { asc, count, eq, ne, and } from 'drizzle-orm';
+import { and, asc, count, eq, ne } from 'drizzle-orm';
 import type { Actions, PageServerLoad, RequestEvent } from './$types';
 import { db } from '$lib/server/db';
 import { session, user } from '$lib/server/db/schema';
 import { requireAdmin } from '$lib/server/access';
+import { cancelInvite, listOpenInvites, sendInviteFromEvent } from '$lib/server/invite';
 
 /**
  * Only account fields are ever selected here. An admin manages who can get in;
@@ -39,7 +40,8 @@ async function adminCount(): Promise<number> {
 
 export const load: PageServerLoad = async (event) => {
 	const admin = requireAdmin(event);
-	return { accounts: await listAccounts(), adminId: admin.id };
+	const [accounts, invites] = await Promise.all([listAccounts(), listOpenInvites()]);
+	return { accounts, invites, adminId: admin.id };
 };
 
 export const actions: Actions = {
@@ -97,5 +99,16 @@ export const actions: Actions = {
 		// logged. The `ne` guard is belt-and-braces on top of targetId().
 		await db.delete(user).where(and(eq(user.id, target.id), ne(user.id, admin.id)));
 		return { success: true, message: 'Account and all of its data deleted.' };
+	},
+	invite: async (event) => {
+		const admin = requireAdmin(event);
+		return sendInviteFromEvent(event, admin);
+	},
+	cancelInvite: async (event) => {
+		requireAdmin(event);
+		const id = (await event.request.formData()).get('id')?.toString();
+		if (!id) return fail(400, { message: 'Missing invitation.' });
+		await cancelInvite(id);
+		return { success: true, message: 'Invitation cancelled.' };
 	}
 };

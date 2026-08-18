@@ -11,7 +11,7 @@ export const user = pgTable('user', {
 	role: text('role', { enum: ['user', 'admin'] })
 		.default('user')
 		.notNull(),
-	// Null until an admin approves the account.
+	// Null until an invited signup (or an admin) approves the account.
 	approvedAt: timestamp('approved_at'),
 	createdAt: timestamp('created_at').defaultNow().notNull(),
 	updatedAt: timestamp('updated_at')

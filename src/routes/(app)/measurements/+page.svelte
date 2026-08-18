@@ -5,8 +5,15 @@
 	import MetricCharts from '$lib/components/MetricCharts.svelte';
 	import MetricTabs from '$lib/components/MetricTabs.svelte';
 	import PeriodTabs from '$lib/components/PeriodTabs.svelte';
+	import WeekdayTabs from '$lib/components/WeekdayTabs.svelte';
 	import { measurementFields, type TrackingEntry } from '$lib/tracking/fields';
-	import { filterEntries, yearsInEntries, type PeriodSelection } from '$lib/tracking/period';
+	import {
+		filterEntries,
+		filterEntriesByWeekdays,
+		yearsInEntries,
+		type PeriodSelection,
+		type WeekdayKey
+	} from '$lib/tracking/period';
 	import type { ActionData, PageServerData } from './$types';
 
 	let { data, form }: { data: PageServerData; form: ActionData } = $props();
@@ -15,8 +22,10 @@
 	let selectedKeys = $derived([selectedKey]);
 	let tableKeys = $derived(measurementFields.map((field) => field.key));
 	let period = $state<PeriodSelection>({ type: 'overall' });
+	let weekdays = $state<WeekdayKey[]>([]);
 	let years = $derived(yearsInEntries(data.entries));
 	let visibleEntries = $derived(filterEntries(data.entries, period));
+	let chartEntries = $derived(filterEntriesByWeekdays(visibleEntries, weekdays));
 	let includeYear = $derived(period.type === 'overall' || period.type === 'custom');
 	let editingEntry = $state<TrackingEntry | null>(null);
 
@@ -35,19 +44,17 @@
 <div class="page-grid">
 	<section class="history-block">
 		<h1>Full history</h1>
-		<MetricTabs
-			fields={measurementFields}
-			{selectedKey}
-			primaryKeys={tableKeys}
-			onSelect={(key) => (selectedKey = key)}
-		/>
-		<PeriodTabs {period} {years} onPeriod={(next) => (period = next)} />
-		<MetricCharts
-			entries={visibleEntries}
-			fields={measurementFields}
-			{selectedKeys}
-			{includeYear}
-		/>
+		<div class="history-filters">
+			<MetricTabs
+				fields={measurementFields}
+				{selectedKey}
+				primaryKeys={tableKeys}
+				onSelect={(key) => (selectedKey = key)}
+			/>
+			<PeriodTabs {period} {years} onPeriod={(next) => (period = next)} />
+			<WeekdayTabs {weekdays} onWeekdays={(next) => (weekdays = next)} />
+		</div>
+		<MetricCharts entries={chartEntries} fields={measurementFields} {selectedKeys} {includeYear} />
 	</section>
 
 	<section class="card" id="entry-form">

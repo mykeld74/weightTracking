@@ -11,6 +11,8 @@
 	} = $props();
 
 	let open = $state(false);
+	let inviteActive = $derived(page.url.pathname.startsWith('/invite'));
+	let passwordActive = $derived(page.url.pathname.startsWith('/account'));
 	let accountsActive = $derived(page.url.pathname.startsWith('/admin'));
 
 	function toggle(event: MouseEvent) {
@@ -23,10 +25,7 @@
 	}
 </script>
 
-<svelte:window
-	onclick={close}
-	onkeydown={(event) => event.key === 'Escape' && close()}
-/>
+<svelte:window onclick={close} onkeydown={(event) => event.key === 'Escape' && close()} />
 
 <div class="user-menu">
 	<button
@@ -49,6 +48,17 @@
 			onclick={(event) => event.stopPropagation()}
 			onkeydown={(event) => event.stopPropagation()}
 		>
+			<a class={{ active: inviteActive }} href={resolve('/invite')} role="menuitem" onclick={close}>
+				Invite
+			</a>
+			<a
+				class={{ active: passwordActive }}
+				href={resolve('/account')}
+				role="menuitem"
+				onclick={close}
+			>
+				Change password
+			</a>
 			{#if admin}
 				<a
 					class={{ active: accountsActive }}

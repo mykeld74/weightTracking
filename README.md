@@ -13,14 +13,17 @@ pnpm dev
 
 ## Accounts and access
 
-Anyone can request an account from the sign-in page, but **new accounts cannot
-use the site until a site admin approves them**. Until then they land on
-`/pending`.
+Signup is **invite-only**. Any approved user can send an invitation from the
+account menu (name → **Invite**); admins can also invite from **Accounts**.
+The recipient creates a password and is approved automatically as a regular
+user (never an admin). Promote someone later if they should manage accounts.
 
-Admins get an extra **Accounts** tab where they can approve, revoke, promote,
-demote, and delete accounts. Admins manage _accounts only_ — there is no path
-from the admin screen to another person's measurements or photos. Every query
-in the app is scoped to the signed-in user's id.
+Change your password from the same menu (name → **Change password**).
+
+Admins can also revoke, promote, demote, and delete accounts. Admins manage
+_accounts only_ — there is no path from the admin screen to another person's
+measurements or photos. Every query in the app is scoped to the signed-in
+user's id.
 
 To create the first admin (or recover admin access):
 
@@ -29,8 +32,9 @@ pnpm admin:bootstrap mike@msdweb.pro
 ```
 
 It is safe to re-run; it only ever grants. Falls back to `$ADMIN_EMAIL`, then
-to `mike@msdweb.pro`, when no address is given. The account must already exist
-— sign up through the form first.
+to `mike@msdweb.pro`, when no address is given. On a fresh database, create
+the first account at `/signup` (no invite needed when there are zero users),
+then run bootstrap.
 
 ## Database changes
 

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import InvitePanel from '$lib/components/InvitePanel.svelte';
 	import { formatDisplayDate } from '$lib/tracking/dates';
 	import type { ActionData, PageServerData } from './$types';
 
@@ -28,8 +29,10 @@
 
 <div class="page-grid">
 	{#if form?.message}
-		<p class="flash">{form.message}</p>
+		<p class={['flash', { ok: Boolean(form.success) }]}>{form.message}</p>
 	{/if}
+
+	<InvitePanel invites={data.invites} />
 
 	<section class="card">
 		<div class="section-head">
@@ -37,7 +40,7 @@
 				<h2>Awaiting approval</h2>
 				<p>
 					{pending.length === 0
-						? 'Nothing waiting.'
+						? 'Nothing waiting. Revoked accounts show up here.'
 						: `${pending.length} account${pending.length === 1 ? '' : 's'} cannot sign in yet.`}
 				</p>
 			</div>

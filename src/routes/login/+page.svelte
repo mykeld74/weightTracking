@@ -5,9 +5,6 @@
 	import type { ActionData, PageServerData } from './$types';
 
 	let { data, form }: { data: PageServerData; form: ActionData } = $props();
-
-	let overrideMode = $state<'signin' | 'signup' | null>(null);
-	let mode = $derived(overrideMode ?? (form?.mode === 'signup' ? 'signup' : 'signin'));
 </script>
 
 <svelte:head>
@@ -23,36 +20,19 @@
 				<strong>Body Ledger</strong>
 			</span>
 		</div>
-		<h1>{mode === 'signup' ? 'Create account' : 'Welcome back'}</h1>
-		<p class="muted">
-			{mode === 'signup'
-				? 'New accounts need an administrator’s approval before you can log anything.'
-				: 'Track composition and measurements, then read the trend.'}
-		</p>
+		<h1>Welcome back</h1>
+		<p class="muted">Track composition and measurements, then read the trend.</p>
 
-		<form method="post" action="?/{mode === 'signup' ? 'signUpEmail' : 'signInEmail'}" use:enhance>
-			{#if mode === 'signup'}
-				<label class="field">
-					Name
-					<input name="name" autocomplete="name" required />
-				</label>
-			{/if}
+		<form method="post" action="?/signInEmail" use:enhance>
 			<label class="field">
 				Email
 				<input type="email" name="email" autocomplete="email" required />
 			</label>
 			<label class="field">
 				Password
-				<input
-					type="password"
-					name="password"
-					autocomplete={mode === 'signup' ? 'new-password' : 'current-password'}
-					required
-				/>
+				<input type="password" name="password" autocomplete="current-password" required />
 			</label>
-			{#if mode === 'signin'}
-				<p class="muted"><a href={resolve('/forgot-password')}>Forgot password?</a></p>
-			{/if}
+			<p class="muted"><a href={resolve('/forgot-password')}>Forgot password?</a></p>
 			{#if data.passwordUpdated && !form?.message}
 				<p class="flash ok">Password updated. Sign in with your new password.</p>
 			{/if}
@@ -60,16 +40,7 @@
 				<p class="flash">{form.message}</p>
 			{/if}
 			<div class="auth-actions">
-				<button class="primary-btn" type="submit"
-					>{mode === 'signup' ? 'Create account' : 'Sign in'}</button
-				>
-				<button
-					class="ghost-btn"
-					type="button"
-					onclick={() => (overrideMode = mode === 'signup' ? 'signin' : 'signup')}
-				>
-					{mode === 'signup' ? 'Have an account?' : 'Need an account?'}
-				</button>
+				<button class="primary-btn" type="submit">Sign in</button>
 			</div>
 		</form>
 	</section>

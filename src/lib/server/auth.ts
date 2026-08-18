@@ -2,10 +2,17 @@ import { ORIGIN, BETTER_AUTH_SECRET } from '$app/env/private';
 import { betterAuth } from 'better-auth/minimal';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { sveltekitCookies } from 'better-auth/svelte-kit';
+import { APIError } from 'better-auth/api';
 import { getRequestEvent } from '$app/server';
 import { db } from '$lib/server/db';
 import * as schema from '$lib/server/db/schema';
 import { sendPasswordResetEmail } from '$lib/server/email';
+import {
+	consumeInvite,
+	findOpenInviteByToken,
+	inviteTokenFromContext,
+	isFirstAccount
+} from '$lib/server/invite';
 
 export const auth = betterAuth({
 	baseURL: ORIGIN,
@@ -34,6 +41,41 @@ export const auth = betterAuth({
 				type: 'date',
 				required: false,
 				input: false
+			}
+		}
+	},
+	databaseHooks: {
+		user: {
+			create: {
+				before: async (created, ctx) => {
+					const token = inviteTokenFromContext(ctx);
+					const invite = await findOpenInviteByToken(token);
+					if (invite && invite.email === created.email.toLowerCase()) {
+						return {
+							data: {
+								role: 'user',
+								approvedAt: new Date()
+							}
+						};
+					}
+
+					if (await isFirstAccount()) {
+						return {
+							data: {
+								role: 'user',
+								approvedAt: new Date()
+							}
+						};
+					}
+
+					throw APIError.from('BAD_REQUEST', {
+						message: 'Invitation required',
+						code: 'INVITE_REQUIRED'
+					});
+				},
+				after: async (_created, ctx) => {
+					await consumeInvite(inviteTokenFromContext(ctx));
+				}
 			}
 		}
 	},

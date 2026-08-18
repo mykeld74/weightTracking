@@ -58,6 +58,16 @@
 		onClose();
 	}
 
+	function pickToday() {
+		const iso = todayIsoDate();
+		const [year, month] = iso.split('-').map(Number);
+		viewYear = year;
+		viewMonth = month;
+		viewMode = 'days';
+		value = iso;
+		onSelect?.(iso);
+	}
+
 	function pickMonth(month: number) {
 		viewMonth = month;
 		viewMode = 'days';
@@ -196,6 +206,7 @@
 					{/each}
 				</div>
 			{/if}
+			<button class="today-btn" type="button" onclick={pickToday}>Today</button>
 		</div>
 	{/if}
 </div>
@@ -376,5 +387,25 @@
 		background: var(--accent);
 		color: var(--accent-text);
 		font-weight: 600;
+	}
+
+	.today-btn {
+		appearance: none;
+		width: 100%;
+		margin-top: 8px;
+		border: 0;
+		border-top: 1px solid var(--line);
+		background: transparent;
+		border-radius: 0 0 10px 10px;
+		padding: 10px 8px 2px;
+		color: var(--accent);
+		cursor: pointer;
+		font: inherit;
+		font-size: 0.86rem;
+		font-weight: 600;
+	}
+
+	.today-btn:hover {
+		color: var(--ink);
 	}
 </style>

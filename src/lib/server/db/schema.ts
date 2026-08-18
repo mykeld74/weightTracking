@@ -1,3 +1,4 @@
+import { sql } from 'drizzle-orm';
 import {
 	customType,
 	date,
@@ -7,7 +8,8 @@ import {
 	real,
 	text,
 	timestamp,
-	unique
+	unique,
+	uniqueIndex
 } from 'drizzle-orm/pg-core';
 import { photoViews } from '../../tracking/photos';
 import { user } from './auth.schema';
@@ -113,6 +115,26 @@ export const progressPhoto = pgTable(
 	},
 	(table) => [
 		unique('progress_photo_user_date_view_unique').on(table.userId, table.recordedOn, table.view)
+	]
+);
+
+export const invitation = pgTable(
+	'invitation',
+	{
+		id: text('id').primaryKey(),
+		email: text('email').notNull(),
+		token: text('token').notNull().unique(),
+		invitedBy: text('invited_by')
+			.notNull()
+			.references(() => user.id, { onDelete: 'cascade' }),
+		expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+		acceptedAt: timestamp('accepted_at', { withTimezone: true }),
+		createdAt: timestamp('created_at').defaultNow().notNull()
+	},
+	(table) => [
+		uniqueIndex('invitation_open_email_unique')
+			.on(table.email)
+			.where(sql`${table.acceptedAt} is null`)
 	]
 );
 
