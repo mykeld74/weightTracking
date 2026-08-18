@@ -1,9 +1,10 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import { resolve } from '$app/paths';
 	import BrandMark from '$lib/components/BrandMark.svelte';
-	import type { ActionData } from './$types';
+	import type { ActionData, PageServerData } from './$types';
 
-	let { form }: { form: ActionData } = $props();
+	let { data, form }: { data: PageServerData; form: ActionData } = $props();
 
 	let overrideMode = $state<'signin' | 'signup' | null>(null);
 	let mode = $derived(overrideMode ?? (form?.mode === 'signup' ? 'signup' : 'signin'));
@@ -49,6 +50,12 @@
 					required
 				/>
 			</label>
+			{#if mode === 'signin'}
+				<p class="muted"><a href={resolve('/forgot-password')}>Forgot password?</a></p>
+			{/if}
+			{#if data.passwordUpdated && !form?.message}
+				<p class="flash ok">Password updated. Sign in with your new password.</p>
+			{/if}
 			{#if form?.message}
 				<p class="flash">{form.message}</p>
 			{/if}

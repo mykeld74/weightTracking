@@ -190,6 +190,10 @@ a {
 	padding: 18px 20px;
 }
 
+#entry-form {
+	scroll-margin-top: 88px;
+}
+
 .page-grid {
 	display: grid;
 	gap: 18px;
@@ -521,6 +525,10 @@ select:focus {
 	color: var(--danger);
 }
 
+.flash.ok {
+	color: var(--teal);
+}
+
 .auth-shell {
 	min-height: 100dvh;
 	display: grid;
@@ -547,14 +555,23 @@ select:focus {
 	margin-top: 20px;
 }
 
+.auth-card .muted a {
+	color: var(--ink);
+	text-decoration: underline;
+	text-underline-offset: 3px;
+}
+
 .auth-actions {
 	display: flex;
 	gap: 8px;
 	margin-top: 8px;
 }
 
-.auth-actions button {
+.auth-actions button,
+.auth-actions a {
 	flex: 1;
+	text-align: center;
+	text-decoration: none;
 }
 
 .empty {

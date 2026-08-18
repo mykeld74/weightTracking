@@ -17,8 +17,29 @@ const isoDatePattern = /^\d{4}-\d{2}-\d{2}$/;
 
 export function isIsoDate(value: string): boolean {
 	if (!isoDatePattern.test(value)) return false;
-	const parsed = new Date(`${value}T00:00:00`);
-	return !Number.isNaN(parsed.getTime());
+	const [year, month, day] = value.split('-').map(Number);
+	return toIsoDate(year, month, day) === value;
+}
+
+export function parseFlexibleDate(value: string): string | null {
+	const raw = value.trim();
+	if (!raw) return null;
+	if (isIsoDate(raw)) return raw;
+
+	const isoSlash = raw.replace(/\//g, '-');
+	if (isIsoDate(isoSlash)) return isoSlash;
+
+	const match = raw.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{2,4})$/);
+	if (!match) return null;
+
+	const month = Number(match[1]);
+	const day = Number(match[2]);
+	let year = Number(match[3]);
+	if (year < 100) year += year >= 70 ? 1900 : 2000;
+
+	const iso = toIsoDate(year, month, day);
+	const expected = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+	return iso === expected ? iso : null;
 }
 
 export type DateRange = {

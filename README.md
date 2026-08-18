@@ -6,7 +6,7 @@ A private log for body composition, measurements, and progress photos. Built wit
 
 ```sh
 pnpm install
-cp .env.example .env   # then fill in DATABASE_URL, ORIGIN, BETTER_AUTH_SECRET
+cp .env.example .env   # then fill in DATABASE_URL, ORIGIN, BETTER_AUTH_SECRET, RESEND_API_KEY
 pnpm db:push
 pnpm dev
 ```
@@ -61,6 +61,8 @@ pnpm build
 pnpm preview
 ```
 
-Deployed through `@sveltejs/adapter-netlify`. Set `DATABASE_URL`, `ORIGIN`, and
-`BETTER_AUTH_SECRET` in the Netlify environment — `ORIGIN` must be the real
-https origin.
+Deployed through `@sveltejs/adapter-netlify`. Set `DATABASE_URL`, `ORIGIN`,
+`BETTER_AUTH_SECRET`, `RESEND_API_KEY`, and `RESEND_FROM` in the Netlify
+environment — `ORIGIN` must be the real https origin. `RESEND_FROM` needs a
+verified Resend domain in production (`onboarding@resend.dev` only delivers
+to the account owner).

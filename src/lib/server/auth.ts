@@ -5,12 +5,21 @@ import { sveltekitCookies } from 'better-auth/svelte-kit';
 import { getRequestEvent } from '$app/server';
 import { db } from '$lib/server/db';
 import * as schema from '$lib/server/db/schema';
+import { sendPasswordResetEmail } from '$lib/server/email';
 
 export const auth = betterAuth({
 	baseURL: ORIGIN,
 	secret: BETTER_AUTH_SECRET,
 	database: drizzleAdapter(db, { provider: 'pg', schema }),
-	emailAndPassword: { enabled: true },
+	emailAndPassword: {
+		enabled: true,
+		revokeSessionsOnPasswordReset: true,
+		sendResetPassword: async ({ user, url }) => {
+			// sendPasswordResetEmail never throws, so a Resend outage cannot turn
+			// this endpoint into an account-existence oracle.
+			await sendPasswordResetEmail({ to: user.email, name: user.name, url });
+		}
+	},
 	user: {
 		additionalFields: {
 			// `input: false` is load-bearing: without it a crafted sign-up request

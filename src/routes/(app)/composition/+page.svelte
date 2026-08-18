@@ -1,4 +1,5 @@
 <script lang="ts">
+	import CsvImport from '$lib/components/CsvImport.svelte';
 	import EntryForm from '$lib/components/EntryForm.svelte';
 	import EntryList from '$lib/components/EntryList.svelte';
 	import MetricCharts from '$lib/components/MetricCharts.svelte';
@@ -7,7 +8,8 @@
 	import {
 		compositionFields,
 		defaultCompositionMetricKeys,
-		primaryCompositionKeys
+		primaryCompositionKeys,
+		type TrackingEntry
 	} from '$lib/tracking/fields';
 	import { injectionChanges } from '$lib/tracking/glp1';
 	import { filterEntries, yearsInEntries, type PeriodSelection } from '$lib/tracking/period';
@@ -27,6 +29,14 @@
 			label: `${change.medication} ${change.dosage} mg`
 		}))
 	);
+	let editingEntry = $state<TrackingEntry | null>(null);
+
+	function editEntry(entry: TrackingEntry) {
+		editingEntry = entry;
+		queueMicrotask(() => {
+			document.getElementById('entry-form')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+		});
+	}
 </script>
 
 <svelte:head>
@@ -52,19 +62,35 @@
 		/>
 	</section>
 
-	<section class="card">
+	<section class="card" id="entry-form">
 		<div class="section-head">
 			<div>
-				<h2>Log an entry</h2>
-				<p>Saving the same date updates that day’s numbers.</p>
+				<h2>{editingEntry ? 'Edit entry' : 'Log an entry'}</h2>
+				<p>
+					{editingEntry
+						? 'Update the numbers or date for this log.'
+						: 'Saving the same date updates that day’s numbers.'}
+				</p>
 			</div>
 		</div>
-		<EntryForm
-			fields={compositionFields}
-			primaryKeys={primaryCompositionKeys}
-			recordedOn={form?.recordedOn}
-			message={form?.message}
-		/>
+		{#key editingEntry?.id ?? 'new'}
+			<EntryForm
+				fields={compositionFields}
+				primaryKeys={primaryCompositionKeys}
+				entry={editingEntry}
+				recordedOn={form?.recordedOn}
+				message={form?.message}
+				onSaved={() => (editingEntry = null)}
+				onCancel={() => (editingEntry = null)}
+			/>
+		{/key}
+		{#if !editingEntry}
+			<CsvImport
+				fields={compositionFields}
+				message={form?.importMessage}
+				count={form?.importCount}
+			/>
+		{/if}
 	</section>
 
 	<section class="card">
@@ -79,6 +105,8 @@
 			fields={compositionFields}
 			{selectedKeys}
 			pinnedKeys={['weight', 'bmi']}
+			editingId={editingEntry?.id}
+			onEdit={editEntry}
 		/>
 	</section>
 </div>

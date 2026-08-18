@@ -7,12 +7,16 @@
 		entries,
 		fields,
 		selectedKeys = [],
-		pinnedKeys = []
+		pinnedKeys = [],
+		editingId = null,
+		onEdit
 	}: {
 		entries: TrackingEntry[];
 		fields: readonly FieldDef[];
 		selectedKeys?: string[];
 		pinnedKeys?: string[];
+		editingId?: string | null;
+		onEdit?: (entry: TrackingEntry) => void;
 	} = $props();
 
 	let columns = $derived.by(() => {
@@ -70,7 +74,7 @@
 			<tbody>
 				{#each recent as entry, index (entry.id)}
 					{@const older = recent[index + 1]}
-					<tr>
+					<tr class={{ editing: editingId === entry.id }}>
 						<th class="sticky">{formatShortDate(entry.recordedOn, includeYear)}</th>
 						{#each columns as field (field.key)}
 							{@const value = numericValue(entry, field.key)}
@@ -93,10 +97,15 @@
 							</td>
 						{/each}
 						<td class="actions">
-							<form method="post" action="?/remove" use:enhance>
-								<input type="hidden" name="id" value={entry.id} />
-								<button class="danger-btn" type="submit">Delete</button>
-							</form>
+							<div class="action-row">
+								{#if onEdit}
+									<button class="text-btn" type="button" onclick={() => onEdit(entry)}>Edit</button>
+								{/if}
+								<form method="post" action="?/remove" use:enhance>
+									<input type="hidden" name="id" value={entry.id} />
+									<button class="danger-btn" type="submit">Delete</button>
+								</form>
+							</div>
 						</td>
 					</tr>
 				{/each}
@@ -163,8 +172,16 @@
 	}
 
 	tbody tr:hover th,
-	tbody tr:hover td {
+	tbody tr:hover td,
+	tbody tr.editing th,
+	tbody tr.editing td {
 		background: #1a1d24;
+	}
+
+	.action-row {
+		display: inline-flex;
+		align-items: center;
+		gap: 12px;
 	}
 
 	.sticky {
@@ -223,6 +240,7 @@
 		padding-right: 12px;
 	}
 
+	.actions :global(.text-btn),
 	.actions :global(.danger-btn) {
 		font-size: 0.8rem;
 	}

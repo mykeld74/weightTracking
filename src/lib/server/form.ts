@@ -29,6 +29,11 @@ export function readRecordedOn(formData: FormData): string | null {
 	return raw;
 }
 
+export function readEntryId(formData: FormData): string | null {
+	const id = formData.get('id')?.toString().trim() ?? '';
+	return id || null;
+}
+
 export function metricFormError(message: string, recordedOn = todayIsoDate()) {
 	return fail(400, { message, recordedOn });
 }

@@ -38,7 +38,7 @@ export const load: PageServerLoad = (event) => {
 		redirect(302, landingFor(event.locals.user));
 	}
 
-	return {};
+	return { passwordUpdated: event.url.searchParams.get('reset') === '1' };
 };
 
 export const actions: Actions = {

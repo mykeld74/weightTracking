@@ -8,5 +8,12 @@ export const variables = defineEnvVars({
 	BETTER_AUTH_SECRET: {
 		description:
 			'Secret used to sign tokens. For production use 32 characters generated with high entropy. See [Better Auth installation](https://www.better-auth.com/docs/installation).'
+	},
+	RESEND_API_KEY: {
+		description: 'Resend API key used to send password reset emails.'
+	},
+	RESEND_FROM: {
+		description:
+			'From address for transactional email, e.g. `Body Ledger <noreply@yourdomain.com>`. Resend’s `onboarding@resend.dev` only delivers to the account owner.'
 	}
 });

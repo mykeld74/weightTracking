@@ -2,39 +2,75 @@
 	import { enhance } from '$app/forms';
 	import DatePicker from './DatePicker.svelte';
 	import { todayIsoDate } from '$lib/tracking/dates';
-	import type { FieldDef } from '$lib/tracking/fields';
+	import type { FieldDef, TrackingEntry } from '$lib/tracking/fields';
 
 	let {
 		fields,
+		entry = null,
 		recordedOn = todayIsoDate(),
 		message = '',
-		primaryKeys
+		primaryKeys,
+		onSaved,
+		onCancel
 	}: {
 		fields: readonly FieldDef[];
+		entry?: TrackingEntry | null;
 		recordedOn?: string;
 		message?: string;
 		primaryKeys?: readonly string[];
+		onSaved?: () => void;
+		onCancel?: () => void;
 	} = $props();
 
 	let calendarOpen = $state(false);
 	let pickedDate = $state<string | undefined>();
-	let selectedDate = $derived(pickedDate ?? recordedOn);
+	let selectedDate = $derived(pickedDate ?? entry?.recordedOn ?? recordedOn);
 	let primaryFields = $derived(
 		primaryKeys ? fields.filter((field) => primaryKeys.includes(field.key)) : fields
 	);
 	let extraFields = $derived(
 		primaryKeys ? fields.filter((field) => !primaryKeys.includes(field.key)) : []
 	);
+	let fieldEdits = $state<Record<string, string>>({});
+
+	function fieldValue(key: string): string {
+		if (key in fieldEdits) return fieldEdits[key];
+		const value = entry?.[key];
+		return typeof value === 'number' && Number.isFinite(value) ? String(value) : '';
+	}
+
+	function afterSave() {
+		return async ({
+			result,
+			update
+		}: {
+			result: { type: string };
+			update: (opts?: { reset: boolean }) => Promise<void>;
+		}) => {
+			await update({ reset: result.type === 'success' });
+			if (result.type === 'success') onSaved?.();
+		};
+	}
 </script>
 
 {#snippet fieldInput(field: FieldDef)}
 	<label class="field">
 		{field.label}{field.unit ? ` (${field.unit})` : ''}
-		<input type="number" name={field.key} step="0.1" inputmode="decimal" />
+		<input
+			type="number"
+			name={field.key}
+			step="0.1"
+			inputmode="decimal"
+			value={fieldValue(field.key)}
+			oninput={(event) => (fieldEdits[field.key] = event.currentTarget.value)}
+		/>
 	</label>
 {/snippet}
 
-<form method="post" action="?/save" use:enhance>
+<form method="post" action="?/save" use:enhance={afterSave}>
+	{#if entry}
+		<input type="hidden" name="id" value={entry.id} />
+	{/if}
 	{#if message}
 		<p class="flash">{message}</p>
 	{/if}
@@ -48,7 +84,10 @@
 			onSelect={(next) => (pickedDate = next)}
 		/>
 		<input type="hidden" name="recordedOn" value={selectedDate} />
-		<button class="primary-btn" type="submit">Save entry</button>
+		<button class="primary-btn" type="submit">{entry ? 'Update entry' : 'Save entry'}</button>
+		{#if entry}
+			<button class="ghost-btn" type="button" onclick={() => onCancel?.()}>Cancel</button>
+		{/if}
 	</div>
 	<div class="field-grid">
 		{#each primaryFields as field (field.key)}
@@ -56,7 +95,7 @@
 		{/each}
 	</div>
 	{#if extraFields.length > 0}
-		<details class="more-details">
+		<details class="more-details" open={entry != null}>
 			<summary>More details</summary>
 			<div class="field-grid">
 				{#each extraFields as field (field.key)}
