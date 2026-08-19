@@ -30,6 +30,8 @@ export const measurementFields = [
 	{ key: 'rightLeg', label: 'Right Leg', unit: 'in', decimals: 1 }
 ] as const satisfies readonly FieldDef[];
 
+export const primaryMeasurementKeys = ['chest', 'stomach', 'leftArm', 'rightArm'] as const;
+
 export const defaultCompositionMetricKeys = ['weight'] as const;
 
 export const primaryCompositionKeys = ['weight', 'bmi', 'bodyFat', 'muscleMass'] as const;

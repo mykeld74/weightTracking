@@ -6,7 +6,7 @@
 	import MetricTabs from '$lib/components/MetricTabs.svelte';
 	import PeriodTabs from '$lib/components/PeriodTabs.svelte';
 	import WeekdayTabs from '$lib/components/WeekdayTabs.svelte';
-	import { measurementFields, type TrackingEntry } from '$lib/tracking/fields';
+	import { measurementFields, primaryMeasurementKeys, type TrackingEntry } from '$lib/tracking/fields';
 	import {
 		filterEntries,
 		filterEntriesByWeekdays,
@@ -58,7 +58,7 @@
 			<MetricTabs
 				fields={measurementFields}
 				{selectedKey}
-				primaryKeys={tableKeys}
+				primaryKeys={primaryMeasurementKeys}
 				onSelect={(key) => (selectedKey = key)}
 			/>
 			<PeriodTabs {period} {years} onPeriod={(next) => (period = next)} />
