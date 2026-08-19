@@ -24,6 +24,11 @@ export function asyncData<T>(key: () => string, value: () => Promise<T> | T): As
 		const currentKey = key();
 		const source = value();
 
+		// Undefined during SSR: the universal load only issues its fetch in the
+		// browser, so there is nothing to settle yet — fall through to the
+		// loading state rather than caching a bogus value.
+		if (source === undefined) return;
+
 		if (typeof (source as { then?: unknown })?.then !== 'function') {
 			const data = source as T;
 			setCached(currentKey, data);

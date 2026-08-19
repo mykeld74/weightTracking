@@ -17,12 +17,12 @@
 	} from '$lib/tracking/period';
 	import Skeleton from '$lib/components/Skeleton.svelte';
 	import { asyncData } from '$lib/client/asyncData.svelte';
-	import type { ActionData, PageServerData } from './$types';
+	import type { ActionData, PageData } from './$types';
 
-	let { data, form }: { data: PageServerData; form: ActionData } = $props();
+	let { data, form }: { data: PageData; form: ActionData } = $props();
 
 	const history = asyncData(
-		() => `measurements:${data.userId}`,
+		() => `measurements:${data.user.id}`,
 		() => data.entries
 	);
 	let entries = $derived(history.current ?? []);

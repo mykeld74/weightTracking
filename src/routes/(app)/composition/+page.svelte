@@ -23,14 +23,14 @@
 	} from '$lib/tracking/period';
 	import Skeleton from '$lib/components/Skeleton.svelte';
 	import { asyncData } from '$lib/client/asyncData.svelte';
-	import type { ActionData, PageServerData } from './$types';
+	import type { ActionData, PageData } from './$types';
 
-	let { data, form }: { data: PageServerData; form: ActionData } = $props();
+	let { data, form }: { data: PageData; form: ActionData } = $props();
 
 	// Streamed from the server: the shell renders now, history fills in, and the
 	// previous result stays on screen while the new one loads.
 	const history = asyncData(
-		() => `composition:${data.userId}`,
+		() => `composition:${data.user.id}`,
 		() => data.history
 	);
 	let entries = $derived(history.current?.entries ?? []);

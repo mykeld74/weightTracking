@@ -13,6 +13,18 @@ export function requireApprovedUser(event: RequestEvent): AppUser {
 	return user;
 }
 
+/**
+ * API variant of the same gate. JSON callers need a status code, not a 302 to
+ * an HTML sign-in page (which a `fetch` would happily follow and then fail to
+ * parse). Same rules, different failure mode.
+ */
+export function requireApprovedUserApi(event: RequestEvent): AppUser {
+	const user = event.locals.user;
+	if (!user) error(401, 'Not signed in');
+	if (!user.approvedAt) error(403, 'Account is awaiting approval');
+	return user;
+}
+
 /** Signed in and holding the admin role. */
 export function requireAdmin(event: RequestEvent): AppUser {
 	const user = requireApprovedUser(event);

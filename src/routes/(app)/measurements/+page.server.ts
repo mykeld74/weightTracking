@@ -1,6 +1,6 @@
 import { fail } from '@sveltejs/kit';
 import { and, eq } from 'drizzle-orm';
-import type { Actions, PageServerLoad } from './$types';
+import type { Actions } from './$types';
 import { db } from '$lib/server/db';
 import { bodyMeasurement } from '$lib/server/db/schema';
 import { metricFormError, readEntryId, readMetricValues, readRecordedOn } from '$lib/server/form';
@@ -8,32 +8,6 @@ import { measurementFields } from '$lib/tracking/fields';
 import { parseMetricCsv } from '$lib/tracking/csv';
 import { requireApprovedUser } from '$lib/server/access';
 import { csvImportResult, importMeasurementCsv, readCsvText } from '$lib/server/importEntries';
-
-// Explicit columns for the same reason as composition: user_id and created_at
-// are dead weight in the payload.
-const entryColumns = {
-	id: bodyMeasurement.id,
-	recordedOn: bodyMeasurement.recordedOn,
-	chest: bodyMeasurement.chest,
-	stomach: bodyMeasurement.stomach,
-	leftArm: bodyMeasurement.leftArm,
-	rightArm: bodyMeasurement.rightArm,
-	leftLeg: bodyMeasurement.leftLeg,
-	rightLeg: bodyMeasurement.rightLeg
-};
-
-// Unawaited so SvelteKit streams it — see the composition load for the rationale.
-export const load: PageServerLoad = (event) => {
-	const user = requireApprovedUser(event);
-
-	const entries = db
-		.select(entryColumns)
-		.from(bodyMeasurement)
-		.where(eq(bodyMeasurement.userId, user.id))
-		.orderBy(bodyMeasurement.recordedOn);
-
-	return { userId: user.id, entries };
-};
 
 export const actions: Actions = {
 	save: async (event) => {
