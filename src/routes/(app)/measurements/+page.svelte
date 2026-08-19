@@ -6,7 +6,11 @@
 	import MetricTabs from '$lib/components/MetricTabs.svelte';
 	import PeriodTabs from '$lib/components/PeriodTabs.svelte';
 	import WeekdayTabs from '$lib/components/WeekdayTabs.svelte';
-	import { measurementFields, primaryMeasurementKeys, type TrackingEntry } from '$lib/tracking/fields';
+	import {
+		measurementFields,
+		primaryMeasurementKeys,
+		type TrackingEntry
+	} from '$lib/tracking/fields';
 	import {
 		filterEntries,
 		filterEntriesByWeekdays,

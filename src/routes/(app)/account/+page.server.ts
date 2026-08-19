@@ -1,13 +1,9 @@
 import { fail } from '@sveltejs/kit';
-import type { Actions, PageServerLoad } from './$types';
+import type { Actions } from './$types';
 import { APIError } from 'better-auth/api';
 import { auth } from '$lib/server/auth';
 import { requireApprovedUser } from '$lib/server/access';
 import { consumeAll, pruneThrottle } from '$lib/server/throttle';
-
-export const load: PageServerLoad = (event) => {
-	requireApprovedUser(event);
-};
 
 export const actions: Actions = {
 	default: async (event) => {

@@ -1,12 +1,7 @@
 import { fail } from '@sveltejs/kit';
-import type { Actions, PageServerLoad } from './$types';
+import type { Actions } from './$types';
 import { requireApprovedUser } from '$lib/server/access';
-import { cancelInvite, listOpenInvites, sendInviteFromEvent } from '$lib/server/invite';
-
-export const load: PageServerLoad = async (event) => {
-	const user = requireApprovedUser(event);
-	return { invites: await listOpenInvites(user.id) };
-};
+import { cancelInvite, sendInviteFromEvent } from '$lib/server/invite';
 
 export const actions: Actions = {
 	invite: async (event) => {

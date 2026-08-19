@@ -3,7 +3,6 @@
 	import { page } from '$app/state';
 	import PhotoGrid from '$lib/components/PhotoGrid.svelte';
 	import DatePicker from '$lib/components/DatePicker.svelte';
-	import { formatDisplayDate } from '$lib/tracking/dates';
 	import {
 		compositionFields,
 		formatFieldValue,
@@ -11,18 +10,53 @@
 		type FieldDef
 	} from '$lib/tracking/fields';
 	import { photoThumbSrc, type PhotoDay } from '$lib/tracking/photos';
-	import type { ActionData, PageServerData } from './$types';
+	import { formatDisplayDate, isIsoDate, todayIsoDate } from '$lib/tracking/dates';
+	import { browser } from '$app/environment';
+	import Skeleton from '$lib/components/Skeleton.svelte';
+	import { asyncData } from '$lib/client/asyncData.svelte';
+	import type { ActionData, PageData } from './$types';
 
-	let { data, form }: { data: PageServerData; form: ActionData } = $props();
+	let { data, form }: { data: PageData; form: ActionData } = $props();
 
 	let calendarOpen = $state(false);
-	let recordedOn = $derived(data.selectedDate);
-	let selectedDay = $derived(data.days.find((day) => day.recordedOn === recordedOn));
-	let composition = $derived(data.composition);
-	let measurement = $derived(data.measurement);
 
-	// The server only sends the selected day's stats, so changing days is a
-	// navigation rather than local state.
+	const photoDays = asyncData(
+		() => `photo-days:${data.user.id}`,
+		() => data.photoDays
+	);
+	let days = $derived(photoDays.current ?? []);
+
+	// The day comes from the URL so refresh and back still work; when it is
+	// absent we fall back to the most recent session once the list arrives.
+	let requestedDate = $derived(page.url.searchParams.get('date'));
+	let recordedOn = $derived(
+		requestedDate && isIsoDate(requestedDate)
+			? requestedDate
+			: (days[0]?.recordedOn ?? todayIsoDate())
+	);
+	let selectedDay = $derived(days.find((day) => day.recordedOn === recordedOn));
+
+	// Re-created whenever the day changes, which is exactly when new stats are
+	// needed. The page load never reads ?date=, so switching days costs one
+	// small request and no navigation work.
+	let statsRequest = $derived(
+		browser
+			? fetch(`/api/photos/day?date=${encodeURIComponent(recordedOn)}`).then(async (res) => {
+					if (!res.ok) throw new Error('Could not load that day.');
+					return res.json() as Promise<{
+						composition: Record<string, unknown> | null;
+						measurement: Record<string, unknown> | null;
+					}>;
+				})
+			: undefined
+	);
+	const dayStats = asyncData(
+		() => `photo-day:${data.user.id}:${recordedOn}`,
+		() => statsRequest
+	);
+	let composition = $derived(dayStats.current?.composition ?? null);
+	let measurement = $derived(dayStats.current?.measurement ?? null);
+
 	function selectDate(next: string) {
 		if (next === recordedOn) return;
 		const target = new URL(page.url);
@@ -98,7 +132,15 @@
 					<p>Logged composition and measurements for this day.</p>
 				</div>
 			</div>
-			{#if !hasStats}
+			{#if !dayStats.current && !dayStats.error}
+				<div class="stat-skeleton">
+					<Skeleton height="18px" width="60%" />
+					<Skeleton height="18px" width="45%" />
+					<Skeleton height="18px" width="52%" />
+				</div>
+			{:else if dayStats.error}
+				<p class="flash">{dayStats.error}</p>
+			{:else if !hasStats}
 				<p class="empty">No composition or measurements logged for this day.</p>
 			{:else}
 				{#if compositionStats.length > 0}
@@ -130,14 +172,28 @@
 			<div class="section-head">
 				<div>
 					<h2>Sessions</h2>
-					<p>{data.days.length} day{data.days.length === 1 ? '' : 's'} with photos</p>
+					<p>
+						{#if photoDays.current}
+							{days.length} day{days.length === 1 ? '' : 's'} with photos
+						{:else}
+							Loading your sessions…
+						{/if}
+					</p>
 				</div>
 			</div>
-			{#if data.days.length === 0}
+			{#if !photoDays.current && !photoDays.error}
+				<div class="session-skeleton">
+					{#each { length: 4 }, row (row)}
+						<Skeleton height="58px" />
+					{/each}
+				</div>
+			{:else if photoDays.error}
+				<p class="flash">{photoDays.error}</p>
+			{:else if days.length === 0}
 				<p class="empty">No photo sessions yet.</p>
 			{:else}
 				<ul class="session-list">
-					{#each data.days as day (day.recordedOn)}
+					{#each days as day (day.recordedOn)}
 						{@const thumb = dayThumb(day)}
 						<li>
 							<button
@@ -164,6 +220,12 @@
 </div>
 
 <style>
+	.stat-skeleton,
+	.session-skeleton {
+		display: grid;
+		gap: 10px;
+	}
+
 	h3 {
 		margin: 0 0 10px;
 		font-size: 0.72rem;

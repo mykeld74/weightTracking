@@ -14,12 +14,12 @@
 	} from '$lib/tracking/glp1';
 	import Skeleton from '$lib/components/Skeleton.svelte';
 	import { asyncData } from '$lib/client/asyncData.svelte';
-	import type { ActionData, PageServerData } from './$types';
+	import type { ActionData, PageData } from './$types';
 
-	let { data, form }: { data: PageServerData; form: ActionData } = $props();
+	let { data, form }: { data: PageData; form: ActionData } = $props();
 
 	const log = asyncData(
-		() => `glp1:${data.userId}`,
+		() => `glp1:${data.user.id}`,
 		() => data.log
 	);
 	let entries = $derived(log.current?.entries ?? []);

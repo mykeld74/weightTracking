@@ -1,27 +1,10 @@
 import { fail } from '@sveltejs/kit';
-import { and, asc, count, eq, ne } from 'drizzle-orm';
-import type { Actions, PageServerLoad, RequestEvent } from './$types';
+import { and, count, eq, ne } from 'drizzle-orm';
+import type { Actions, RequestEvent } from './$types';
 import { db } from '$lib/server/db';
 import { session, user } from '$lib/server/db/schema';
 import { requireAdmin } from '$lib/server/access';
-import { cancelInvite, listOpenInvites, sendInviteFromEvent } from '$lib/server/invite';
-
-/**
- * Only account fields are ever selected here. An admin manages who can get in;
- * they never gain a route to another person's measurements or photos.
- */
-const accountColumns = {
-	id: user.id,
-	name: user.name,
-	email: user.email,
-	role: user.role,
-	approvedAt: user.approvedAt,
-	createdAt: user.createdAt
-};
-
-async function listAccounts() {
-	return db.select(accountColumns).from(user).orderBy(asc(user.createdAt));
-}
+import { cancelInvite, sendInviteFromEvent } from '$lib/server/invite';
 
 async function targetId(event: RequestEvent, adminId: string) {
 	const id = (await event.request.formData()).get('id')?.toString();
@@ -37,12 +20,6 @@ async function adminCount(): Promise<number> {
 	const [row] = await db.select({ total: count() }).from(user).where(eq(user.role, 'admin'));
 	return row?.total ?? 0;
 }
-
-export const load: PageServerLoad = async (event) => {
-	const admin = requireAdmin(event);
-	const [accounts, invites] = await Promise.all([listAccounts(), listOpenInvites()]);
-	return { accounts, invites, adminId: admin.id };
-};
 
 export const actions: Actions = {
 	approve: async (event) => {

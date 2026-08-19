@@ -33,6 +33,14 @@ export function requireAdmin(event: RequestEvent): AppUser {
 	return user;
 }
 
+/** API variant of the admin gate — 404 rather than a redirect, for JSON callers. */
+export function requireAdminApi(event: RequestEvent): AppUser {
+	const user = requireApprovedUserApi(event);
+	// 404 rather than 403 so the admin API isn't discoverable by probing.
+	if (user.role !== 'admin') error(404, 'Not found');
+	return user;
+}
+
 /** Where a signed-in user belongs right now. */
 export function landingFor(user: Pick<AppUser, 'approvedAt'>): string {
 	return user.approvedAt ? '/composition' : '/pending';
