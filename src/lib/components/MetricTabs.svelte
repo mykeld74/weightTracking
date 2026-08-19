@@ -5,18 +5,22 @@
 		fields,
 		selectedKey,
 		primaryKeys,
+		desktopKeys = primaryKeys,
 		onSelect
 	}: {
 		fields: readonly FieldDef[];
 		selectedKey: string;
 		primaryKeys: readonly string[];
+		desktopKeys?: readonly string[];
 		onSelect: (key: string) => void;
 	} = $props();
 
 	let menuOpen = $state(false);
+	let viewportWidth = $state(1024);
 
-	let primaryFields = $derived(fields.filter((field) => primaryKeys.includes(field.key)));
-	let moreFields = $derived(fields.filter((field) => !primaryKeys.includes(field.key)));
+	let activeKeys = $derived(viewportWidth <= 720 ? primaryKeys : desktopKeys);
+	let primaryFields = $derived(fields.filter((field) => activeKeys.includes(field.key)));
+	let moreFields = $derived(fields.filter((field) => !activeKeys.includes(field.key)));
 	let selectedMore = $derived(moreFields.find((field) => field.key === selectedKey));
 
 	function select(key: string) {
@@ -31,6 +35,7 @@
 </script>
 
 <svelte:window
+	bind:innerWidth={viewportWidth}
 	onclick={() => (menuOpen = false)}
 	onkeydown={(event) => event.key === 'Escape' && (menuOpen = false)}
 />

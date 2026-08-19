@@ -59,6 +59,7 @@
 				fields={measurementFields}
 				{selectedKey}
 				primaryKeys={primaryMeasurementKeys}
+				desktopKeys={tableKeys}
 				onSelect={(key) => (selectedKey = key)}
 			/>
 			<PeriodTabs {period} {years} onPeriod={(next) => (period = next)} />
