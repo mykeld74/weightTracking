@@ -9,27 +9,56 @@ import { parseMetricCsv } from '$lib/tracking/csv';
 import { requireApprovedUser } from '$lib/server/access';
 import { csvImportResult, importCompositionCsv, readCsvText } from '$lib/server/importEntries';
 
-export const load: PageServerLoad = async (event) => {
+// Explicit columns: `select()` also ships user_id (identical on every row) and
+// created_at, which the UI never reads — about 70 KB of the payload at current
+// history size, plus a Date object per row to parse.
+const entryColumns = {
+	id: bodyComposition.id,
+	recordedOn: bodyComposition.recordedOn,
+	weight: bodyComposition.weight,
+	bmi: bodyComposition.bmi,
+	bodyFat: bodyComposition.bodyFat,
+	muscleMass: bodyComposition.muscleMass,
+	muscleMassPercent: bodyComposition.muscleMassPercent,
+	bodyWater: bodyComposition.bodyWater,
+	leanBodyMass: bodyComposition.leanBodyMass,
+	boneMass: bodyComposition.boneMass,
+	protein: bodyComposition.protein,
+	visceralFat: bodyComposition.visceralFat,
+	bmr: bodyComposition.bmr,
+	fatContent: bodyComposition.fatContent,
+	subcutaneousFat: bodyComposition.subcutaneousFat
+};
+
+// Returned unawaited so SvelteKit streams them. The page shell renders on
+// navigation immediately and the history arrives as a follow-up chunk; the
+// client shows the previous result meanwhile (see AsyncData).
+export const load: PageServerLoad = (event) => {
 	const user = requireApprovedUser(event);
 
-	const [entries, injections] = await Promise.all([
-		db
-			.select()
-			.from(bodyComposition)
-			.where(eq(bodyComposition.userId, user.id))
-			.orderBy(bodyComposition.recordedOn),
-		db
-			.select({
-				recordedOn: glp1Injection.recordedOn,
-				medication: glp1Injection.medication,
-				dosage: glp1Injection.dosage
-			})
-			.from(glp1Injection)
-			.where(eq(glp1Injection.userId, user.id))
-			.orderBy(glp1Injection.recordedOn)
-	]);
+	const entries = db
+		.select(entryColumns)
+		.from(bodyComposition)
+		.where(eq(bodyComposition.userId, user.id))
+		.orderBy(bodyComposition.recordedOn);
 
-	return { entries, injections };
+	const injections = db
+		.select({
+			recordedOn: glp1Injection.recordedOn,
+			medication: glp1Injection.medication,
+			dosage: glp1Injection.dosage
+		})
+		.from(glp1Injection)
+		.where(eq(glp1Injection.userId, user.id))
+		.orderBy(glp1Injection.recordedOn);
+
+	return {
+		userId: user.id,
+		history: Promise.all([entries, injections]).then(([rows, shots]) => ({
+			entries: rows,
+			injections: shots
+		}))
+	};
 };
 
 export const actions: Actions = {

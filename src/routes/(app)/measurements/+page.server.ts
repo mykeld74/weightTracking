@@ -9,16 +9,30 @@ import { parseMetricCsv } from '$lib/tracking/csv';
 import { requireApprovedUser } from '$lib/server/access';
 import { csvImportResult, importMeasurementCsv, readCsvText } from '$lib/server/importEntries';
 
-export const load: PageServerLoad = async (event) => {
+// Explicit columns for the same reason as composition: user_id and created_at
+// are dead weight in the payload.
+const entryColumns = {
+	id: bodyMeasurement.id,
+	recordedOn: bodyMeasurement.recordedOn,
+	chest: bodyMeasurement.chest,
+	stomach: bodyMeasurement.stomach,
+	leftArm: bodyMeasurement.leftArm,
+	rightArm: bodyMeasurement.rightArm,
+	leftLeg: bodyMeasurement.leftLeg,
+	rightLeg: bodyMeasurement.rightLeg
+};
+
+// Unawaited so SvelteKit streams it — see the composition load for the rationale.
+export const load: PageServerLoad = (event) => {
 	const user = requireApprovedUser(event);
 
-	const entries = await db
-		.select()
+	const entries = db
+		.select(entryColumns)
 		.from(bodyMeasurement)
 		.where(eq(bodyMeasurement.userId, user.id))
 		.orderBy(bodyMeasurement.recordedOn);
 
-	return { entries };
+	return { userId: user.id, entries };
 };
 
 export const actions: Actions = {

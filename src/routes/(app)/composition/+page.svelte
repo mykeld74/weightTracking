@@ -21,21 +21,32 @@
 		type PeriodSelection,
 		type WeekdayKey
 	} from '$lib/tracking/period';
+	import Skeleton from '$lib/components/Skeleton.svelte';
+	import { asyncData } from '$lib/client/asyncData.svelte';
 	import type { ActionData, PageServerData } from './$types';
 
 	let { data, form }: { data: PageServerData; form: ActionData } = $props();
+
+	// Streamed from the server: the shell renders now, history fills in, and the
+	// previous result stays on screen while the new one loads.
+	const history = asyncData(
+		() => `composition:${data.userId}`,
+		() => data.history
+	);
+	let entries = $derived(history.current?.entries ?? []);
+	let injections = $derived(history.current?.injections ?? []);
 
 	let selectedKey = $state<string>(defaultCompositionMetricKeys[0]);
 	let selectedKeys = $derived([selectedKey]);
 	let period = $state<PeriodSelection>({ type: 'overall' });
 	let weekdays = $state<WeekdayKey[]>([]);
 	let grain = $state<ChartGrain>('day');
-	let years = $derived(yearsInEntries(data.entries));
-	let visibleEntries = $derived(filterEntries(data.entries, period));
+	let years = $derived(yearsInEntries(entries));
+	let visibleEntries = $derived(filterEntries(entries, period));
 	let chartEntries = $derived(filterEntriesByWeekdays(visibleEntries, weekdays));
 	let includeYear = $derived(period.type === 'overall' || period.type === 'custom');
 	let markers = $derived(
-		injectionChanges(data.injections).map((change) => ({
+		injectionChanges(injections).map((change) => ({
 			date: change.date,
 			label: `${change.medication} ${change.dosage} mg`
 		}))
@@ -72,14 +83,25 @@
 				onGrain={(next) => (grain = next)}
 			/>
 		</div>
-		<MetricCharts
-			entries={chartEntries}
-			fields={compositionFields}
-			{selectedKeys}
-			{includeYear}
-			{markers}
-			{grain}
-		/>
+		{#if history.current}
+			<div class={{ revalidating: history.isStale }}>
+				<MetricCharts
+					entries={chartEntries}
+					fields={compositionFields}
+					{selectedKeys}
+					{includeYear}
+					{markers}
+					{grain}
+				/>
+			</div>
+		{:else if history.error}
+			<p class="flash">{history.error}</p>
+		{:else}
+			<div class="chart-skeleton">
+				<Skeleton height="96px" />
+				<Skeleton height="340px" />
+			</div>
+		{/if}
 	</section>
 
 	<section class="card" id="entry-form">
@@ -117,16 +139,60 @@
 		<div class="section-head">
 			<div>
 				<h2>Entries</h2>
-				<p>{visibleEntries.length} in this range · deltas vs the previous log</p>
+				<p>
+					{#if history.current}
+						{visibleEntries.length} in this range · deltas vs the previous log
+					{:else}
+						Loading your history…
+					{/if}
+				</p>
 			</div>
 		</div>
-		<EntryList
-			entries={visibleEntries}
-			fields={compositionFields}
-			{selectedKeys}
-			pinnedKeys={['weight', 'bmi']}
-			editingId={editingEntry?.id}
-			onEdit={editEntry}
-		/>
+		{#if history.current}
+			<div class={{ revalidating: history.isStale }}>
+				<EntryList
+					entries={visibleEntries}
+					fields={compositionFields}
+					{selectedKeys}
+					pinnedKeys={['weight', 'bmi']}
+					editingId={editingEntry?.id}
+					onEdit={editEntry}
+				/>
+			</div>
+		{:else if !history.error}
+			<div class="list-skeleton">
+				{#each { length: 6 }, row (row)}
+					<Skeleton height="34px" />
+				{/each}
+			</div>
+		{/if}
 	</section>
 </div>
+
+<style>
+	.chart-skeleton,
+	.list-skeleton {
+		display: grid;
+		gap: 10px;
+	}
+
+	/* Dim only if the refresh is actually slow. The 350ms delay means a fast
+	   revalidation finishes before the animation starts, so routine navigation
+	   never flickers. */
+	.revalidating {
+		animation: dim-refreshing 140ms ease-out 350ms forwards;
+	}
+
+	@keyframes dim-refreshing {
+		to {
+			opacity: 0.6;
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.revalidating {
+			animation: none;
+			opacity: 0.6;
+		}
+	}
+</style>

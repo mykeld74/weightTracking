@@ -25,6 +25,23 @@
 		return fields.filter((field) => wanted.has(field.key));
 	});
 	let recent = $derived([...entries].sort((a, b) => b.recordedOn.localeCompare(a.recordedOn)));
+
+	// The table lives in a ~560px scroll box that shows roughly 15 rows, so
+	// rendering the full history (hundreds of rows, each with its own enhanced
+	// delete form) costs thousands of DOM nodes per navigation for no benefit.
+	const pageSize = 100;
+	let visibleCount = $state(pageSize);
+
+	$effect(() => {
+		// Reset the window when the underlying list changes (navigation, filters).
+		void entries.length;
+		visibleCount = pageSize;
+	});
+
+	// Deltas still read from the full `recent` array, so the row at the window
+	// edge compares against the entry just outside it.
+	let shown = $derived(recent.slice(0, visibleCount));
+	let hiddenCount = $derived(Math.max(0, recent.length - shown.length));
 	let includeYear = $derived(
 		recent.length > 0 &&
 			recent[0].recordedOn.slice(0, 4) !== recent[recent.length - 1].recordedOn.slice(0, 4)
@@ -72,7 +89,7 @@
 				</tr>
 			</thead>
 			<tbody>
-				{#each recent as entry, index (entry.id)}
+				{#each shown as entry, index (entry.id)}
 					{@const older = recent[index + 1]}
 					<tr class={{ editing: editingId === entry.id }}>
 						<th class="sticky">{formatShortDate(entry.recordedOn, includeYear)}</th>
@@ -111,10 +128,30 @@
 				{/each}
 			</tbody>
 		</table>
+		{#if hiddenCount > 0}
+			<div class="more-row">
+				<button class="ghost-btn" type="button" onclick={() => (visibleCount += pageSize)}>
+					Show {Math.min(pageSize, hiddenCount)} more
+				</button>
+				<small>{shown.length} of {recent.length}</small>
+			</div>
+		{/if}
 	</div>
 {/if}
 
 <style>
+	.more-row {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: 12px;
+		padding: 12px;
+	}
+
+	.more-row small {
+		color: var(--ink-soft);
+	}
+
 	.sr-only {
 		position: absolute;
 		width: 1px;

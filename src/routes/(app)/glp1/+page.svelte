@@ -12,20 +12,29 @@
 		popularMedications,
 		uniqueValues
 	} from '$lib/tracking/glp1';
+	import Skeleton from '$lib/components/Skeleton.svelte';
+	import { asyncData } from '$lib/client/asyncData.svelte';
 	import type { ActionData, PageServerData } from './$types';
 
 	let { data, form }: { data: PageServerData; form: ActionData } = $props();
 
+	const log = asyncData(
+		() => `glp1:${data.userId}`,
+		() => data.log
+	);
+	let entries = $derived(log.current?.entries ?? []);
+	let regimens = $derived(log.current?.regimens ?? []);
+
 	let medications = $derived(
 		mergeOptions(popularMedications, [
-			...uniqueValues(data.entries, 'medication'),
-			...data.regimens.map((item) => item.medication)
+			...uniqueValues(entries, 'medication'),
+			...regimens.map((item) => item.medication)
 		])
 	);
-	let locations = $derived(mergeOptions(commonLocations, uniqueValues(data.entries, 'location')));
-	let regimen = $derived(currentRegimen(data.regimens, todayIsoDate()));
-	let lastDose = $derived(lastDoseFor(data.entries));
-	let nextLocation = $derived(nextLocationFor(data.entries));
+	let locations = $derived(mergeOptions(commonLocations, uniqueValues(entries, 'location')));
+	let regimen = $derived(currentRegimen(regimens, todayIsoDate()));
+	let lastDose = $derived(lastDoseFor(entries));
+	let nextLocation = $derived(nextLocationFor(entries));
 	let medicationMessage = $derived(
 		form && 'intent' in form && form.intent === 'medication' ? form.message : ''
 	);
@@ -46,7 +55,15 @@
 				<p>Saved as your current medication until you switch.</p>
 			</div>
 		</div>
-		<Glp1Medication {regimen} regimens={data.regimens} {medications} message={medicationMessage} />
+		{#if log.current}
+			<div class={{ revalidating: log.isStale }}>
+				<Glp1Medication {regimen} {regimens} {medications} message={medicationMessage} />
+			</div>
+		{:else if log.error}
+			<p class="flash">{log.error}</p>
+		{:else}
+			<Skeleton height="76px" />
+		{/if}
 	</section>
 
 	{#if regimen}
@@ -73,9 +90,44 @@
 		<div class="section-head">
 			<div>
 				<h2>Injections</h2>
-				<p>{data.entries.length} logged</p>
+				<p>{log.current ? `${entries.length} logged` : 'Loading your log…'}</p>
 			</div>
 		</div>
-		<Glp1List entries={data.entries} />
+		{#if log.current}
+			<div class={{ revalidating: log.isStale }}>
+				<Glp1List {entries} />
+			</div>
+		{:else if !log.error}
+			<div class="list-skeleton">
+				{#each { length: 4 }, row (row)}
+					<Skeleton height="34px" />
+				{/each}
+			</div>
+		{/if}
 	</section>
 </div>
+
+<style>
+	.list-skeleton {
+		display: grid;
+		gap: 10px;
+	}
+
+	/* Dim only if the refresh is actually slow, so routine navigation never flickers. */
+	.revalidating {
+		animation: dim-refreshing 140ms ease-out 350ms forwards;
+	}
+
+	@keyframes dim-refreshing {
+		to {
+			opacity: 0.6;
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.revalidating {
+			animation: none;
+			opacity: 0.6;
+		}
+	}
+</style>

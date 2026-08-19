@@ -41,8 +41,11 @@ async function listRegimens(userId: string) {
 		.orderBy(asc(glp1Regimen.startedOn));
 }
 
-async function ensureRegimens(userId: string, entries: Awaited<ReturnType<typeof listEntries>>) {
-	const existing = await listRegimens(userId);
+async function ensureRegimens(
+	userId: string,
+	entries: Awaited<ReturnType<typeof listEntries>>,
+	existing: Awaited<ReturnType<typeof listRegimens>>
+) {
 	if (existing.length > 0) return existing;
 
 	const inferred = inferRegimens(entries);
@@ -60,11 +63,21 @@ async function ensureRegimens(userId: string, entries: Awaited<ReturnType<typeof
 	return listRegimens(userId);
 }
 
-export const load: PageServerLoad = async (event) => {
+// Streamed rather than awaited so navigation paints immediately. The two
+// queries still run together — each Neon HTTP call is its own ~50ms round trip.
+export const load: PageServerLoad = (event) => {
 	const user = requireApprovedUser(event);
-	const entries = await listEntries(user.id);
-	const regimens = await ensureRegimens(user.id, entries);
-	return { entries, regimens };
+
+	const log = Promise.all([listEntries(user.id), listRegimens(user.id)]).then(
+		async ([entries, existingRegimens]) => ({
+			entries,
+			// Backfilling regimens is a one-time path that only costs extra
+			// queries when nothing exists yet.
+			regimens: await ensureRegimens(user.id, entries, existingRegimens)
+		})
+	);
+
+	return { userId: user.id, log };
 };
 
 export const actions: Actions = {

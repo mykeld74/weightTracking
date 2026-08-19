@@ -20,37 +20,52 @@ export const load: PageServerLoad = async (event) => {
 	const user = requireApprovedUser(event);
 
 	// Photo metadata only — the image bytes are served by /photos/file/[id].
-	const photoRows = await db
-		.select({
-			id: progressPhoto.id,
-			recordedOn: progressPhoto.recordedOn,
-			view: progressPhoto.view,
-			createdAt: progressPhoto.createdAt
-		})
-		.from(progressPhoto)
-		.where(eq(progressPhoto.userId, user.id))
-		.orderBy(desc(progressPhoto.recordedOn));
-
-	const photos = photoRows.map((row) => toPhotoMeta({ ...row, view: row.view as PhotoView }));
-	const days = groupPhotosByDate(photos);
-	const requested = event.url.searchParams.get('date');
-	const selectedDate =
-		requested && isIsoDate(requested) ? requested : (days[0]?.recordedOn ?? todayIsoDate());
+	const listPhotos = () =>
+		db
+			.select({
+				id: progressPhoto.id,
+				recordedOn: progressPhoto.recordedOn,
+				view: progressPhoto.view,
+				createdAt: progressPhoto.createdAt
+			})
+			.from(progressPhoto)
+			.where(eq(progressPhoto.userId, user.id))
+			.orderBy(desc(progressPhoto.recordedOn));
 
 	// Only the selected day's stats are needed, so don't drag the whole history
 	// across the wire on every visit.
-	const [composition, measurements] = await Promise.all([
-		db
-			.select()
-			.from(bodyComposition)
-			.where(and(eq(bodyComposition.userId, user.id), eq(bodyComposition.recordedOn, selectedDate)))
-			.limit(1),
-		db
-			.select()
-			.from(bodyMeasurement)
-			.where(and(eq(bodyMeasurement.userId, user.id), eq(bodyMeasurement.recordedOn, selectedDate)))
-			.limit(1)
-	]);
+	const dayStats = (day: string) =>
+		Promise.all([
+			db
+				.select()
+				.from(bodyComposition)
+				.where(and(eq(bodyComposition.userId, user.id), eq(bodyComposition.recordedOn, day)))
+				.limit(1),
+			db
+				.select()
+				.from(bodyMeasurement)
+				.where(and(eq(bodyMeasurement.userId, user.id), eq(bodyMeasurement.recordedOn, day)))
+				.limit(1)
+		]);
+
+	const requested = event.url.searchParams.get('date');
+	const knownDate = requested && isIsoDate(requested) ? requested : null;
+
+	// Switching days carries ?date=, so the day's stats don't have to wait on the
+	// photo list — one round trip instead of two. Only the first visit, which has
+	// to discover the latest day, still needs them in sequence.
+	const [photoRows, stats] = knownDate
+		? await Promise.all([listPhotos(), dayStats(knownDate)])
+		: await (async () => {
+				const rows = await listPhotos();
+				const fallback = rows[0]?.recordedOn ?? todayIsoDate();
+				return [rows, await dayStats(fallback)] as const;
+			})();
+
+	const photos = photoRows.map((row) => toPhotoMeta({ ...row, view: row.view as PhotoView }));
+	const days = groupPhotosByDate(photos);
+	const selectedDate = knownDate ?? days[0]?.recordedOn ?? todayIsoDate();
+	const [composition, measurements] = stats;
 
 	return {
 		days,

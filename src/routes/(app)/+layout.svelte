@@ -5,8 +5,15 @@
 	import NavIcon from '$lib/components/NavIcon.svelte';
 	import UserMenu from '$lib/components/UserMenu.svelte';
 	import { isAdmin } from '$lib/tracking/users';
+	import { syncCacheOwner } from '$lib/client/staleCache';
 
 	let { data, children } = $props();
+
+	// Signing in as someone else in the same tab must not leave the previous
+	// account's cached rows sitting in memory for the stale-while-revalidate pass.
+	$effect(() => {
+		syncCacheOwner(data.user.id);
+	});
 
 	let compositionActive = $derived(page.url.pathname.startsWith('/composition'));
 	let measurementsActive = $derived(page.url.pathname.startsWith('/measurements'));
