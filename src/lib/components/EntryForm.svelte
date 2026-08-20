@@ -24,6 +24,7 @@
 
 	let calendarOpen = $state(false);
 	let pickedDate = $state<string | undefined>();
+	let saving = $state(false);
 	let selectedDate = $derived(pickedDate ?? entry?.recordedOn ?? recordedOn);
 	let primaryFields = $derived(
 		primaryKeys ? fields.filter((field) => primaryKeys.includes(field.key)) : fields
@@ -40,6 +41,7 @@
 	}
 
 	function afterSave() {
+		saving = true;
 		return async ({
 			result,
 			update
@@ -47,8 +49,12 @@
 			result: { type: string };
 			update: (opts?: { reset: boolean }) => Promise<void>;
 		}) => {
-			await update({ reset: result.type === 'success' });
-			if (result.type === 'success') onSaved?.();
+			try {
+				await update({ reset: result.type === 'success' });
+				if (result.type === 'success') onSaved?.();
+			} finally {
+				saving = false;
+			}
 		};
 	}
 </script>
@@ -84,9 +90,18 @@
 			onSelect={(next) => (pickedDate = next)}
 		/>
 		<input type="hidden" name="recordedOn" value={selectedDate} />
-		<button class="primary-btn" type="submit">{entry ? 'Update entry' : 'Save entry'}</button>
+		<button class="primary-btn" type="submit" disabled={saving} aria-busy={saving}>
+			{#if saving}
+				<span class="spinner" aria-hidden="true"></span>
+				Saving…
+			{:else}
+				{entry ? 'Update entry' : 'Save entry'}
+			{/if}
+		</button>
 		{#if entry}
-			<button class="ghost-btn" type="button" onclick={() => onCancel?.()}>Cancel</button>
+			<button class="ghost-btn" type="button" disabled={saving} onclick={() => onCancel?.()}
+				>Cancel</button
+			>
 		{/if}
 	</div>
 	<div class="field-grid">
@@ -107,6 +122,42 @@
 </form>
 
 <style>
+	.primary-btn {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		gap: 8px;
+		min-width: 8.5rem;
+	}
+
+	.primary-btn:disabled {
+		opacity: 0.75;
+		cursor: wait;
+	}
+
+	.spinner {
+		width: 14px;
+		height: 14px;
+		border: 2px solid color-mix(in srgb, var(--accent-text) 35%, transparent);
+		border-top-color: var(--accent-text);
+		border-radius: 50%;
+		animation: spin 0.7s linear infinite;
+	}
+
+	@keyframes spin {
+		to {
+			transform: rotate(360deg);
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.spinner {
+			animation: none;
+			border-top-color: color-mix(in srgb, var(--accent-text) 35%, transparent);
+			opacity: 0.7;
+		}
+	}
+
 	.more-details {
 		margin-top: 14px;
 	}

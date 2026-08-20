@@ -38,8 +38,9 @@
 	let weekdays = $state<WeekdayKey[]>([]);
 	let grain = $state<ChartGrain>('day');
 	let years = $derived(yearsInEntries(entries));
-	let visibleEntries = $derived(filterEntries(entries, period));
-	let chartEntries = $derived(filterEntriesByWeekdays(visibleEntries, weekdays));
+	let visibleEntries = $derived(
+		filterEntriesByWeekdays(filterEntries(entries, period), weekdays)
+	);
 	let includeYear = $derived(period.type === 'overall' || period.type === 'custom');
 	let editingEntry = $state<TrackingEntry | null>(null);
 
@@ -77,7 +78,7 @@
 		{#if history.current}
 			<div class={{ revalidating: history.isStale }}>
 				<MetricCharts
-					entries={chartEntries}
+					entries={visibleEntries}
 					fields={measurementFields}
 					{selectedKeys}
 					{includeYear}
