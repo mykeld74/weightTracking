@@ -53,6 +53,11 @@
 		}))
 	);
 	let editingEntry = $state<TrackingEntry | null>(null);
+	let latestEntry = $derived(
+		entries.length > 0
+			? [...entries].sort((a, b) => b.recordedOn.localeCompare(a.recordedOn))[0]
+			: null
+	);
 
 	function editEntry(entry: TrackingEntry) {
 		editingEntry = entry;
@@ -121,6 +126,7 @@
 				fields={compositionFields}
 				primaryKeys={primaryCompositionKeys}
 				entry={editingEntry}
+				defaults={latestEntry}
 				recordedOn={form?.recordedOn}
 				message={form?.message}
 				onSaved={() => (editingEntry = null)}

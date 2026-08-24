@@ -7,6 +7,7 @@
 	let {
 		fields,
 		entry = null,
+		defaults = null,
 		recordedOn = todayIsoDate(),
 		message = '',
 		primaryKeys,
@@ -15,6 +16,8 @@
 	}: {
 		fields: readonly FieldDef[];
 		entry?: TrackingEntry | null;
+		/** Prefill for a new log (usually the most recent entry). Ignored while editing. */
+		defaults?: TrackingEntry | null;
 		recordedOn?: string;
 		message?: string;
 		primaryKeys?: readonly string[];
@@ -33,10 +36,11 @@
 		primaryKeys ? fields.filter((field) => !primaryKeys.includes(field.key)) : []
 	);
 	let fieldEdits = $state<Record<string, string>>({});
+	let valuesSource = $derived(entry ?? defaults);
 
 	function fieldValue(key: string): string {
 		if (key in fieldEdits) return fieldEdits[key];
-		const value = entry?.[key];
+		const value = valuesSource?.[key];
 		return typeof value === 'number' && Number.isFinite(value) ? String(value) : '';
 	}
 
