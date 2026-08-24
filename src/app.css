@@ -133,7 +133,10 @@ a {
 
 .tabs {
 	display: flex;
-	flex-wrap: wrap;
+	flex-wrap: nowrap;
+	flex: 1 1 auto;
+	justify-content: center;
+	min-width: 0;
 	gap: 4px;
 	padding: 4px;
 	background: rgba(255, 255, 255, 0.04);
@@ -637,6 +640,35 @@ select:focus {
 	.summary-card.avg {
 		grid-column: 1 / -1;
 	}
+
+	/* Tablet / narrow desktop: keep one row, drop labels so tabs don't wrap. */
+	.brand small {
+		display: none;
+	}
+
+	.topbar {
+		gap: 10px;
+	}
+
+	.tabs a {
+		position: relative;
+		gap: 0;
+		padding: 8px 12px;
+		--tab-icon-size: 20px;
+	}
+
+	.tab-label {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		padding: 0;
+		margin: -1px;
+		overflow: hidden;
+		clip: rect(0, 0, 0, 0);
+		clip-path: inset(50%);
+		white-space: nowrap;
+		border: 0;
+	}
 }
 
 @media (max-width: 720px) {
@@ -659,10 +691,6 @@ select:focus {
 		min-width: 0;
 	}
 
-	.brand small {
-		display: none;
-	}
-
 	.brand-mark {
 		width: 32px;
 		height: 32px;
@@ -674,30 +702,14 @@ select:focus {
 
 	.tabs {
 		grid-area: tabs;
-		flex-wrap: nowrap;
 		width: 100%;
 	}
 
 	.tabs a {
-		position: relative;
 		flex: 1 1 0;
 		justify-content: center;
 		min-width: 0;
 		padding: 8px 4px;
-		--tab-icon-size: 20px;
-	}
-
-	.tab-label {
-		position: absolute;
-		width: 1px;
-		height: 1px;
-		padding: 0;
-		margin: -1px;
-		overflow: hidden;
-		clip: rect(0, 0, 0, 0);
-		clip-path: inset(50%);
-		white-space: nowrap;
-		border: 0;
 	}
 
 	.user-meta {

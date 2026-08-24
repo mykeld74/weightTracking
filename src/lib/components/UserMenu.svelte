@@ -113,11 +113,17 @@
 		flex: none;
 	}
 
+	@media (max-width: 980px) {
+		.user-menu-trigger {
+			max-width: min(28vw, 140px);
+			padding: 4px 6px;
+			font-size: 0.88rem;
+		}
+	}
+
 	@media (max-width: 720px) {
 		.user-menu-trigger {
 			max-width: min(46vw, 180px);
-			padding: 4px 6px;
-			font-size: 0.88rem;
 		}
 	}
 
