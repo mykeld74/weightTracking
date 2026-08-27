@@ -12,6 +12,7 @@
 		type TrackingEntry
 	} from '$lib/tracking/fields';
 	import {
+		defaultPeriod,
 		filterEntries,
 		filterEntriesByWeekdays,
 		yearsInEntries,
@@ -29,19 +30,25 @@
 		() => `measurements:${data.user.id}`,
 		() => data.entries
 	);
-	let entries = $derived(history.current ?? []);
+	let entries = $derived(history.current?.entries ?? []);
+	let glp1StartedOn = $derived(history.current?.glp1StartedOn ?? null);
 
 	let selectedKey = $state<string>(measurementFields[0].key);
 	let selectedKeys = $derived([selectedKey]);
 	let tableKeys = $derived(measurementFields.map((field) => field.key));
-	let period = $state<PeriodSelection>({ type: 'overall' });
+	let period = $state<PeriodSelection>(defaultPeriod());
 	let weekdays = $state<WeekdayKey[]>([]);
 	let grain = $state<ChartGrain>('day');
 	let years = $derived(yearsInEntries(entries));
 	let visibleEntries = $derived(
-		filterEntriesByWeekdays(filterEntries(entries, period), weekdays)
+		filterEntriesByWeekdays(filterEntries(entries, period, glp1StartedOn), weekdays)
 	);
-	let includeYear = $derived(period.type === 'overall' || period.type === 'custom');
+	let includeYear = $derived(
+		period.type === 'overall' ||
+			period.type === 'custom' ||
+			period.type === 'recent' ||
+			period.type === 'glp1'
+	);
 	let editingEntry = $state<TrackingEntry | null>(null);
 	let latestEntry = $derived(
 		entries.length > 0
@@ -72,7 +79,7 @@
 				desktopKeys={tableKeys}
 				onSelect={(key) => (selectedKey = key)}
 			/>
-			<PeriodTabs {period} {years} onPeriod={(next) => (period = next)} />
+			<PeriodTabs {period} {years} {glp1StartedOn} onPeriod={(next) => (period = next)} />
 			<WeekdayTabs
 				{weekdays}
 				{grain}

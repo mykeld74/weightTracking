@@ -1,7 +1,30 @@
+import { todayIsoDate } from './dates';
+
 export type PeriodSelection =
+	| { type: 'recent' }
+	| { type: 'glp1' }
 	| { type: 'overall' }
 	| { type: 'year'; year: number }
 	| { type: 'custom'; from: string; to: string };
+
+/** Calendar years shown as primary tabs (current year and the two before it). */
+export const recentYearSpan = 3;
+
+export function recentYears(reference = new Date()): number[] {
+	const current = reference.getFullYear();
+	return Array.from(
+		{ length: recentYearSpan },
+		(_, index) => current - (recentYearSpan - 1 - index)
+	);
+}
+
+export function recentPeriodFrom(reference = new Date()): string {
+	return `${recentYears(reference)[0]}-01-01`;
+}
+
+export function defaultPeriod(): PeriodSelection {
+	return { type: 'recent' };
+}
 
 export function yearsInEntries(entries: Array<{ recordedOn: string }>): number[] {
 	const years = new Set<number>();
@@ -14,9 +37,21 @@ export function yearsInEntries(entries: Array<{ recordedOn: string }>): number[]
 
 export function filterEntries<T extends { recordedOn: string }>(
 	entries: T[],
-	period: PeriodSelection
+	period: PeriodSelection,
+	glp1StartedOn: string | null = null
 ): T[] {
 	if (period.type === 'overall') return entries;
+	if (period.type === 'recent') {
+		const from = recentPeriodFrom();
+		return entries.filter((entry) => entry.recordedOn >= from);
+	}
+	if (period.type === 'glp1') {
+		if (!glp1StartedOn) return [];
+		const to = todayIsoDate();
+		return entries.filter(
+			(entry) => entry.recordedOn >= glp1StartedOn && entry.recordedOn <= to
+		);
+	}
 	if (period.type === 'year') {
 		const prefix = `${period.year}-`;
 		return entries.filter((entry) => entry.recordedOn.startsWith(prefix));

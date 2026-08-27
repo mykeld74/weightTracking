@@ -14,6 +14,7 @@
 	} from '$lib/tracking/fields';
 	import { injectionChanges } from '$lib/tracking/glp1';
 	import {
+		defaultPeriod,
 		filterEntries,
 		filterEntriesByWeekdays,
 		yearsInEntries,
@@ -35,17 +36,23 @@
 	);
 	let entries = $derived(history.current?.entries ?? []);
 	let injections = $derived(history.current?.injections ?? []);
+	let glp1StartedOn = $derived(history.current?.glp1StartedOn ?? null);
 
 	let selectedKey = $state<string>(defaultCompositionMetricKeys[0]);
 	let selectedKeys = $derived([selectedKey]);
-	let period = $state<PeriodSelection>({ type: 'overall' });
+	let period = $state<PeriodSelection>(defaultPeriod());
 	let weekdays = $state<WeekdayKey[]>([]);
 	let grain = $state<ChartGrain>('day');
 	let years = $derived(yearsInEntries(entries));
 	let visibleEntries = $derived(
-		filterEntriesByWeekdays(filterEntries(entries, period), weekdays)
+		filterEntriesByWeekdays(filterEntries(entries, period, glp1StartedOn), weekdays)
 	);
-	let includeYear = $derived(period.type === 'overall' || period.type === 'custom');
+	let includeYear = $derived(
+		period.type === 'overall' ||
+			period.type === 'custom' ||
+			period.type === 'recent' ||
+			period.type === 'glp1'
+	);
 	let markers = $derived(
 		injectionChanges(injections).map((change) => ({
 			date: change.date,
@@ -81,7 +88,7 @@
 				primaryKeys={primaryCompositionKeys}
 				onSelect={(key) => (selectedKey = key)}
 			/>
-			<PeriodTabs {period} {years} onPeriod={(next) => (period = next)} />
+			<PeriodTabs {period} {years} {glp1StartedOn} onPeriod={(next) => (period = next)} />
 			<WeekdayTabs
 				{weekdays}
 				{grain}

@@ -1,7 +1,8 @@
 import { asc, eq } from 'drizzle-orm';
 import { db } from '$lib/server/db';
 import { glp1Injection, glp1Regimen } from '$lib/server/db/schema';
-import { inferRegimens } from '$lib/tracking/glp1';
+import { todayIsoDate } from '$lib/tracking/dates';
+import { currentRegimen, inferRegimens } from '$lib/tracking/glp1';
 
 const regimenColumns = {
 	id: glp1Regimen.id,
@@ -61,4 +62,14 @@ export async function ensureRegimens(
 export async function loadGlp1(userId: string) {
 	const [entries, existing] = await Promise.all([listEntries(userId), listRegimens(userId)]);
 	return { entries, regimens: await ensureRegimens(userId, entries, existing) };
+}
+
+/** Current medication start, or the earliest injection if no regimen is set. */
+export async function glp1StartedOnFor(userId: string): Promise<string | null> {
+	const { entries, regimens } = await loadGlp1(userId);
+	const regimen = currentRegimen(regimens, todayIsoDate());
+	if (regimen) return regimen.startedOn;
+
+	const earliest = [...entries].sort((a, b) => a.recordedOn.localeCompare(b.recordedOn))[0];
+	return earliest?.recordedOn ?? null;
 }

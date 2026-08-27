@@ -4,6 +4,7 @@ import type { RequestHandler } from './$types';
 import { db } from '$lib/server/db';
 import { bodyComposition, glp1Injection } from '$lib/server/db/schema';
 import { requireApprovedUserApi } from '$lib/server/access';
+import { glp1StartedOnFor } from '$lib/server/glp1';
 
 // Explicit columns: `select()` also ships user_id (identical on every row) and
 // created_at, which the UI never reads.
@@ -30,7 +31,7 @@ const entryColumns = {
 export const GET: RequestHandler = async (event) => {
 	const user = requireApprovedUserApi(event);
 
-	const [entries, injections] = await Promise.all([
+	const [entries, injections, glp1StartedOn] = await Promise.all([
 		db
 			.select(entryColumns)
 			.from(bodyComposition)
@@ -44,9 +45,13 @@ export const GET: RequestHandler = async (event) => {
 			})
 			.from(glp1Injection)
 			.where(eq(glp1Injection.userId, user.id))
-			.orderBy(glp1Injection.recordedOn)
+			.orderBy(glp1Injection.recordedOn),
+		glp1StartedOnFor(user.id)
 	]);
 
 	// Personal health data: never let a shared cache hold it.
-	return json({ entries, injections }, { headers: { 'Cache-Control': 'private, no-store' } });
+	return json(
+		{ entries, injections, glp1StartedOn },
+		{ headers: { 'Cache-Control': 'private, no-store' } }
+	);
 };

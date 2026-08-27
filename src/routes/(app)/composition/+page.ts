@@ -4,6 +4,7 @@ import type { PageLoad } from './$types';
 export type CompositionHistory = {
 	entries: Array<Record<string, unknown> & { id: string; recordedOn: string }>;
 	injections: Array<{ recordedOn: string; medication: string; dosage: number }>;
+	glp1StartedOn: string | null;
 };
 
 /**
