@@ -1,7 +1,15 @@
 import { parseFlexibleDate } from './dates';
 import type { FieldDef } from './fields';
 
-export const csvDateHeaders = ['recordedon', 'date', 'day', 'loggedon', 'logdate'] as const;
+export const csvDateHeaders = [
+	'recordedon',
+	'date',
+	'day',
+	'loggedon',
+	'logdate',
+	'dateandtime',
+	'datetime'
+] as const;
 export const maxCsvBytes = 1_000_000;
 export const maxCsvRows = 500;
 
@@ -23,7 +31,7 @@ export function normalizeCsvHeader(value: string): string {
 	return value
 		.trim()
 		.toLowerCase()
-		.replace(/\(.*?\)/g, '')
+		.replace(/\(([^)]*)\)/g, '$1')
 		.replace(/[^a-z0-9]+/g, '');
 }
 
@@ -103,19 +111,35 @@ export function parseCsv(text: string): string[][] {
 }
 
 function parseCsvNumber(raw: string): { ok: true; value: number | null } | { ok: false } {
-	const cleaned = raw.trim().replace(/,/g, '').replace(/%/g, '');
-	if (cleaned === '') return { ok: true, value: null };
+	const cleaned = raw
+		.trim()
+		.replace(/,/g, '')
+		.replace(/%/g, '')
+		.replace(/\b(lb|lbs|kg|kcal)\b/gi, '')
+		.trim();
+	if (cleaned === '' || cleaned === '-' || cleaned === '--' || cleaned === '- -') {
+		return { ok: true, value: null };
+	}
 	const parsed = Number(cleaned);
 	if (!Number.isFinite(parsed)) return { ok: false };
 	return { ok: true, value: parsed };
 }
 
 function headerAliases(field: FieldDef): string[] {
-	return [
+	const aliases = [
 		normalizeCsvHeader(field.key),
 		normalizeCsvHeader(field.label),
-		normalizeCsvHeader(`${field.label}${field.unit}`)
+		normalizeCsvHeader(`${field.label}${field.unit}`),
+		normalizeCsvHeader(`${field.label} ${field.unit}`)
 	];
+	// Prefer the lb column from scale exports; never match Weight(kg).
+	if (field.key === 'weight') {
+		aliases.push('weightlb', 'weightlbs');
+	}
+	if (field.key === 'skeletalMuscleRate') {
+		aliases.push('skeletalmusclerate');
+	}
+	return aliases;
 }
 
 export function parseMetricCsv(text: string, fields: readonly FieldDef[]): CsvParseResult {
@@ -138,7 +162,12 @@ export function parseMetricCsv(text: string, fields: readonly FieldDef[]): CsvPa
 	const fieldIndex = new Map<string, number>();
 	for (const field of fields) {
 		const aliases = new Set(headerAliases(field));
-		const index = headerRow.findIndex((header) => aliases.has(header));
+		const preferred =
+			field.key === 'weight'
+				? headerRow.findIndex((header) => header === 'weightlb' || header === 'weightlbs')
+				: -1;
+		const index =
+			preferred >= 0 ? preferred : headerRow.findIndex((header) => aliases.has(header));
 		if (index >= 0) fieldIndex.set(field.key, index);
 	}
 

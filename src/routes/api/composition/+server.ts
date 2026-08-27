@@ -21,6 +21,8 @@ const entryColumns = {
 	protein: bodyComposition.protein,
 	visceralFat: bodyComposition.visceralFat,
 	bmr: bodyComposition.bmr,
+	metabolicAge: bodyComposition.metabolicAge,
+	skeletalMuscleRate: bodyComposition.skeletalMuscleRate,
 	fatContent: bodyComposition.fatContent,
 	subcutaneousFat: bodyComposition.subcutaneousFat
 };

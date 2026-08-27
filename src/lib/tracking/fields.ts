@@ -17,6 +17,8 @@ export const compositionFields = [
 	{ key: 'protein', label: 'Protein', unit: '%', decimals: 1 },
 	{ key: 'visceralFat', label: 'Visceral Fat', unit: '', decimals: 1 },
 	{ key: 'bmr', label: 'BMR', unit: 'kcal', decimals: 0 },
+	{ key: 'metabolicAge', label: 'Metabolic Age', unit: '', decimals: 0 },
+	{ key: 'skeletalMuscleRate', label: 'Skeletal Muscle Rate', unit: '%', decimals: 1 },
 	{ key: 'fatContent', label: 'Fat Content', unit: 'lbs', decimals: 1 },
 	{ key: 'subcutaneousFat', label: 'Subcutaneous Fat', unit: '%', decimals: 1 }
 ] as const satisfies readonly FieldDef[];
@@ -51,6 +53,8 @@ const chartColors = {
 	protein: '#c084fc',
 	visceralFat: '#ff8a5b',
 	bmr: '#e8c547',
+	metabolicAge: '#a78bfa',
+	skeletalMuscleRate: '#34d399',
 	fatContent: '#e879a8',
 	subcutaneousFat: '#ff9ecd',
 	chest: '#f5a623',

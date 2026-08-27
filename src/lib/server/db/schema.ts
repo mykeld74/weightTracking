@@ -41,6 +41,8 @@ export const bodyComposition = pgTable(
 		protein: real('protein'),
 		visceralFat: real('visceral_fat'),
 		bmr: real('bmr'),
+		metabolicAge: real('metabolic_age'),
+		skeletalMuscleRate: real('skeletal_muscle_rate'),
 		fatContent: real('fat_content'),
 		subcutaneousFat: real('subcutaneous_fat'),
 		createdAt: timestamp('created_at').defaultNow().notNull()

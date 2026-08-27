@@ -29,6 +29,17 @@ export function parseFlexibleDate(value: string): string | null {
 	const isoSlash = raw.replace(/\//g, '-');
 	if (isIsoDate(isoSlash)) return isoSlash;
 
+	// Scale exports: "2026.01.05 10:39 PM"
+	const dotted = raw.match(/^(\d{4})\.(\d{1,2})\.(\d{1,2})(?:\b|$)/);
+	if (dotted) {
+		const year = Number(dotted[1]);
+		const month = Number(dotted[2]);
+		const day = Number(dotted[3]);
+		const iso = toIsoDate(year, month, day);
+		const expected = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+		return iso === expected ? iso : null;
+	}
+
 	const match = raw.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{2,4})$/);
 	if (!match) return null;
 
