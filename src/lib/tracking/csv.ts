@@ -11,7 +11,7 @@ export const csvDateHeaders = [
 	'datetime'
 ] as const;
 export const maxCsvBytes = 1_000_000;
-export const maxCsvRows = 500;
+export const maxCsvRows = 600;
 
 export type ParsedCsvRow = {
 	recordedOn: string;
