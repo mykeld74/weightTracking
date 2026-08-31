@@ -146,40 +146,16 @@
 		}
 	}
 
-	function startDrag(
-		handle: HandleType,
-		clientX: number,
-		clientY: number,
-		target: HTMLElement,
-		pointerId?: number
-	) {
+	function handlePointerDown(handle: HandleType, event: PointerEvent) {
+		event.stopPropagation();
+		event.preventDefault();
 		activeHandle = handle;
-		dragStartX = clientX;
-		dragStartY = clientY;
+		dragStartX = event.clientX;
+		dragStartY = event.clientY;
 		initialCropX = cropX;
 		initialCropY = cropY;
 		initialCropW = cropW;
 		initialCropH = cropH;
-
-		if (pointerId != null) {
-			try {
-				target.setPointerCapture(pointerId);
-			} catch {
-				// ignore
-			}
-		}
-	}
-
-	function handlePointerDown(handle: HandleType, event: PointerEvent) {
-		event.stopPropagation();
-		event.preventDefault();
-		startDrag(
-			handle,
-			event.clientX,
-			event.clientY,
-			event.currentTarget as HTMLElement,
-			event.pointerId
-		);
 	}
 
 	function handlePointerMove(event: PointerEvent) {
@@ -337,14 +313,8 @@
 		cropH = Math.round(Math.max(minSize, Math.min(newH, imgH - cropY)));
 	}
 
-	function handlePointerUp(event: PointerEvent) {
-		if (!activeHandle) return;
+	function handlePointerUp() {
 		activeHandle = null;
-		try {
-			(event.currentTarget as HTMLElement).releasePointerCapture(event.pointerId);
-		} catch {
-			// ignore
-		}
 	}
 
 	async function renderCroppedBlob(): Promise<Blob> {
@@ -463,7 +433,12 @@
 	}
 </script>
 
-<svelte:window onkeydown={onKey} />
+<svelte:window
+	onkeydown={onKey}
+	onpointermove={handlePointerMove}
+	onpointerup={handlePointerUp}
+	onpointercancel={handlePointerUp}
+/>
 
 <div
 	class="cropper-overlay"
@@ -517,16 +492,7 @@
 
 		<!-- Interactive Crop Workspace -->
 		<div class="crop-workspace-wrap">
-			<div
-				class="crop-stage"
-				style:width="{containerWidth}px"
-				style:height="{containerHeight}px"
-				role="region"
-				aria-label="Crop adjustment canvas"
-				onpointermove={handlePointerMove}
-				onpointerup={handlePointerUp}
-				onpointercancel={handlePointerUp}
-			>
+			<div class="crop-stage" style:width="{containerWidth}px" style:height="{containerHeight}px">
 				{#if imgLoaded}
 					<!-- Displayed oriented image -->
 					<div
