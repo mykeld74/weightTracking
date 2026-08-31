@@ -166,8 +166,7 @@ export function parseMetricCsv(text: string, fields: readonly FieldDef[]): CsvPa
 			field.key === 'weight'
 				? headerRow.findIndex((header) => header === 'weightlb' || header === 'weightlbs')
 				: -1;
-		const index =
-			preferred >= 0 ? preferred : headerRow.findIndex((header) => aliases.has(header));
+		const index = preferred >= 0 ? preferred : headerRow.findIndex((header) => aliases.has(header));
 		if (index >= 0) fieldIndex.set(field.key, index);
 	}
 

@@ -2,6 +2,7 @@
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
 	import PhotoGrid from '$lib/components/PhotoGrid.svelte';
+	import PhotoCompare from '$lib/components/PhotoCompare.svelte';
 	import DatePicker from '$lib/components/DatePicker.svelte';
 	import {
 		compositionFields,
@@ -9,7 +10,15 @@
 		measurementFields,
 		type FieldDef
 	} from '$lib/tracking/fields';
-	import { photoThumbSrc, type PhotoDay } from '$lib/tracking/photos';
+	import {
+		downloadPhoto,
+		photoFileName,
+		photoSrc,
+		photoThumbSrc,
+		type PhotoDay,
+		type PhotoMeta,
+		type PhotoView
+	} from '$lib/tracking/photos';
 	import { formatDisplayDate, isIsoDate, todayIsoDate } from '$lib/tracking/dates';
 	import { browser } from '$app/environment';
 	import Skeleton from '$lib/components/Skeleton.svelte';
@@ -19,6 +28,27 @@
 	let { data, form }: { data: PageData; form: ActionData } = $props();
 
 	let calendarOpen = $state(false);
+	let downloadingDay = $state(false);
+	let activeTab = $state<'session' | 'compare'>(
+		page.url.searchParams.get('mode') === 'compare' ? 'compare' : 'session'
+	);
+
+	function setTab(tab: 'session' | 'compare') {
+		activeTab = tab;
+		const target = new URL(page.url);
+		if (tab === 'compare') {
+			target.searchParams.set('mode', 'compare');
+		} else {
+			target.searchParams.delete('mode');
+		}
+		// eslint-disable-next-line svelte/no-navigation-without-resolve
+		goto(target, { replaceState: true, noScroll: true, keepFocus: true });
+	}
+
+	function openSessionFromCompare(date: string) {
+		selectDate(date);
+		setTab('session');
+	}
 
 	const photoDays = asyncData(
 		() => `photo-days:${data.user.id}`,
@@ -91,6 +121,24 @@
 	function viewCount(day: PhotoDay): number {
 		return Object.keys(day.photos).length;
 	}
+
+	async function downloadAllPhotosForDay() {
+		if (!selectedDay || downloadingDay) return;
+		downloadingDay = true;
+		try {
+			const entries = Object.entries(selectedDay.photos) as Array<[PhotoView, PhotoMeta]>;
+			for (let i = 0; i < entries.length; i += 1) {
+				const [view, photo] = entries[i];
+				if (!photo) continue;
+				await downloadPhoto(photoSrc(photo), photoFileName(recordedOn, view));
+				if (i < entries.length - 1) {
+					await new Promise((resolve) => setTimeout(resolve, 250));
+				}
+			}
+		} finally {
+			downloadingDay = false;
+		}
+	}
 </script>
 
 <svelte:head>
@@ -102,26 +150,67 @@
 		<div class="section-head">
 			<div>
 				<h2>Progress photos</h2>
-				<p>Choose a file or take a photo for each view. Saving the same view replaces it.</p>
+				<p>
+					{#if activeTab === 'session'}
+						Choose a file or take a photo for each view. Saving the same view replaces it.
+					{:else}
+						Compare photos across up to 4 dates side-by-side to track changes over time.
+					{/if}
+				</p>
+			</div>
+			<div class="mode-tabs" role="tablist" aria-label="Photos view mode">
+				<button
+					class={['chip mode-chip', activeTab === 'session' && 'active']}
+					type="button"
+					role="tab"
+					aria-selected={activeTab === 'session'}
+					onclick={() => setTab('session')}
+				>
+					Session view
+				</button>
+				<button
+					class={['chip mode-chip', activeTab === 'compare' && 'active']}
+					type="button"
+					role="tab"
+					aria-selected={activeTab === 'compare'}
+					onclick={() => setTab('compare')}
+				>
+					Compare {days.length >= 2 ? `(${Math.min(4, days.length)})` : ''}
+				</button>
 			</div>
 		</div>
-		<div class="form-row">
-			<DatePicker
-				label="Date"
-				value={recordedOn}
-				open={calendarOpen}
-				onOpen={() => (calendarOpen = true)}
-				onClose={() => (calendarOpen = false)}
-				onSelect={selectDate}
-			/>
-			{#if selectedDay}
-				<form method="post" action="?/removeDay">
-					<input type="hidden" name="recordedOn" value={recordedOn} />
-					<button class="ghost-btn" type="submit">Remove this day</button>
-				</form>
-			{/if}
-		</div>
-		<PhotoGrid {recordedOn} photos={selectedDay?.photos ?? {}} message={form?.message} />
+
+		{#if activeTab === 'session'}
+			<div class="form-row">
+				<DatePicker
+					label="Date"
+					value={recordedOn}
+					open={calendarOpen}
+					onOpen={() => (calendarOpen = true)}
+					onClose={() => (calendarOpen = false)}
+					onSelect={selectDate}
+				/>
+				{#if selectedDay && viewCount(selectedDay) > 0}
+					<button
+						class="ghost-btn"
+						type="button"
+						onclick={downloadAllPhotosForDay}
+						disabled={downloadingDay}
+					>
+						{downloadingDay ? 'Downloading…' : 'Download all'}
+					</button>
+				{/if}
+				{#if selectedDay}
+					<form method="post" action="?/removeDay">
+						<input type="hidden" name="recordedOn" value={recordedOn} />
+						<button class="ghost-btn" type="submit">Remove this day</button>
+					</form>
+				{/if}
+			</div>
+			<PhotoGrid {recordedOn} photos={selectedDay?.photos ?? {}} message={form?.message} />
+		{:else}
+			<PhotoCompare {days} onSelectSession={openSessionFromCompare} />
+		{/if}
 	</section>
 
 	<div class="photos-split">
@@ -180,6 +269,15 @@
 						{/if}
 					</p>
 				</div>
+				{#if days.length >= 2}
+					<button
+						class="ghost-btn session-compare-btn"
+						type="button"
+						onclick={() => setTab('compare')}
+					>
+						Compare
+					</button>
+				{/if}
 			</div>
 			{#if !photoDays.current && !photoDays.error}
 				<div class="session-skeleton">
@@ -220,6 +318,22 @@
 </div>
 
 <style>
+	.mode-tabs {
+		display: flex;
+		align-items: center;
+		gap: 6px;
+	}
+
+	.mode-chip {
+		font-size: 0.84rem;
+		padding: 5px 14px;
+	}
+
+	.session-compare-btn {
+		font-size: 0.8rem;
+		padding: 4px 10px;
+	}
+
 	.stat-skeleton,
 	.session-skeleton {
 		display: grid;

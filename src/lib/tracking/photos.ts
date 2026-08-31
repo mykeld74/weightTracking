@@ -50,3 +50,35 @@ export function photoSrc(photo: PhotoMeta): string {
 export function photoThumbSrc(photo: PhotoMeta): string {
 	return `/photos/file/${photo.id}?t=${photo.updatedAt}&size=thumb`;
 }
+
+export function photoFileName(recordedOn: string, view: string): string {
+	return `body-ledger-${recordedOn}-${view}.jpg`;
+}
+
+export async function downloadPhoto(src: string, filename: string): Promise<void> {
+	try {
+		const response = await fetch(src);
+		if (!response.ok) throw new Error('Could not fetch photo for download.');
+		const blob = await response.blob();
+		downloadBlob(blob, filename);
+	} catch {
+		const anchor = document.createElement('a');
+		anchor.href = src;
+		anchor.download = filename;
+		anchor.target = '_blank';
+		document.body.appendChild(anchor);
+		anchor.click();
+		document.body.removeChild(anchor);
+	}
+}
+
+export function downloadBlob(blob: Blob, filename: string): void {
+	const url = URL.createObjectURL(blob);
+	const anchor = document.createElement('a');
+	anchor.href = url;
+	anchor.download = filename;
+	document.body.appendChild(anchor);
+	anchor.click();
+	document.body.removeChild(anchor);
+	setTimeout(() => URL.revokeObjectURL(url), 2000);
+}

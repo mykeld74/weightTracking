@@ -1,9 +1,12 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import CameraCapture from './CameraCapture.svelte';
+	import PhotoCropper from './PhotoCropper.svelte';
 	import PhotoLightbox from './PhotoLightbox.svelte';
 	import { compressImage } from '$lib/tracking/compressImage';
 	import {
+		downloadPhoto,
+		photoFileName,
 		photoSrc,
 		photoViewLabels,
 		photoViews,
@@ -25,7 +28,8 @@
 	let uploading = $state<PhotoView | null>(null);
 	let pickerView = $state<PhotoView | null>(null);
 	let cameraView = $state<PhotoView | null>(null);
-	let lightbox = $state<{ src: string; label: string } | null>(null);
+	let lightbox = $state<{ src: string; label: string; view: PhotoView } | null>(null);
+	let cropper = $state<{ src: string | File | Blob; label: string; view: PhotoView } | null>(null);
 	let localError = $state('');
 	const fileInputs: Partial<Record<PhotoView, HTMLInputElement>> = {};
 	const captureInputs: Partial<Record<PhotoView, HTMLInputElement>> = {};
@@ -63,7 +67,25 @@
 			return;
 		}
 		pickerView = null;
-		lightbox = { src, label: photoViewLabels[view] };
+		lightbox = { src, label: photoViewLabels[view], view };
+	}
+
+	function startCrop(view: PhotoView, event?: MouseEvent) {
+		event?.stopPropagation();
+		if (uploading) return;
+		const src = srcFor(view);
+		if (!src) return;
+		lightbox = null;
+		pickerView = null;
+		cropper = { src, label: photoViewLabels[view], view };
+	}
+
+	async function downloadSlotPhoto(view: PhotoView, event: MouseEvent) {
+		event.stopPropagation();
+		const src = srcFor(view);
+		if (!src) return;
+		const filename = photoFileName(recordedOn, view);
+		await downloadPhoto(src, filename);
 	}
 
 	function closePicker() {
@@ -88,13 +110,22 @@
 		captureInputs[view]?.click();
 	}
 
+	function stageForCrop(view: PhotoView, file: File) {
+		cameraView = null;
+		pickerView = null;
+		cropper = { src: file, label: photoViewLabels[view], view };
+		// Reset inputs so picking the same file again triggers change event
+		if (fileInputs[view]) fileInputs[view]!.value = '';
+		if (captureInputs[view]) captureInputs[view]!.value = '';
+	}
+
 	async function ingest(view: PhotoView, file: File) {
 		const input = fileInputs[view];
 		if (!input?.form) return;
 
 		localError = '';
 		uploading = view;
-		cameraView = null;
+		cropper = null;
 		try {
 			const { image, thumb } = await compressImage(file);
 
@@ -120,11 +151,11 @@
 		}
 	}
 
-	async function onPick(view: PhotoView, event: Event) {
+	function onPick(view: PhotoView, event: Event) {
 		const input = event.currentTarget as HTMLInputElement;
 		const file = input.files?.[0];
 		if (!file) return;
-		await ingest(view, file);
+		stageForCrop(view, file);
 	}
 
 	function afterSave(view: PhotoView) {
@@ -145,7 +176,7 @@
 	}
 
 	function onWindowKey(event: KeyboardEvent) {
-		if (event.key !== 'Escape' || cameraView || lightbox) return;
+		if (event.key !== 'Escape' || cameraView || lightbox || cropper) return;
 		pickerView = null;
 	}
 </script>
@@ -228,6 +259,16 @@
 				<span>{photoViewLabels[view]}</span>
 				<div class="slot-actions">
 					{#if src}
+						<button class="text-btn" type="button" onclick={(event) => startCrop(view, event)}>
+							Crop
+						</button>
+						<button
+							class="text-btn"
+							type="button"
+							onclick={(event) => downloadSlotPhoto(view, event)}
+						>
+							Download
+						</button>
 						<button class="text-btn" type="button" onclick={(event) => openPicker(view, event)}>
 							Replace
 						</button>
@@ -246,14 +287,33 @@
 </div>
 
 {#if lightbox}
-	<PhotoLightbox src={lightbox.src} label={lightbox.label} onClose={() => (lightbox = null)} />
+	{@const currentView = lightbox.view}
+	<PhotoLightbox
+		src={lightbox.src}
+		label={lightbox.label}
+		filename={photoFileName(recordedOn, currentView)}
+		onCrop={() => startCrop(currentView)}
+		onClose={() => (lightbox = null)}
+	/>
+{/if}
+
+{#if cropper}
+	{@const activeCropper = cropper}
+	<PhotoCropper
+		src={activeCropper.src}
+		label={activeCropper.label}
+		{recordedOn}
+		view={activeCropper.view}
+		onSave={(file) => ingest(activeCropper.view, file)}
+		onCancel={() => (cropper = null)}
+	/>
 {/if}
 
 {#if cameraView}
 	{@const view = cameraView}
 	<CameraCapture
 		label={photoViewLabels[view]}
-		onCapture={(file) => ingest(view, file)}
+		onCapture={(file) => stageForCrop(view, file)}
 		onCancel={() => (cameraView = null)}
 	/>
 {/if}
@@ -355,9 +415,8 @@
 
 	.slot-meta {
 		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		gap: 8px;
+		flex-direction: column;
+		gap: 4px;
 		margin-top: 8px;
 		font-size: 0.86rem;
 		color: var(--ink-soft);
@@ -366,7 +425,13 @@
 	.slot-actions {
 		display: flex;
 		align-items: center;
-		gap: 12px;
+		flex-wrap: wrap;
+		gap: 6px 10px;
+	}
+
+	.slot-actions :global(.text-btn) {
+		padding: 0;
+		font-size: 0.82rem;
 	}
 
 	.sr-only {

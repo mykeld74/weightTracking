@@ -48,9 +48,7 @@ export function filterEntries<T extends { recordedOn: string }>(
 	if (period.type === 'glp1') {
 		if (!glp1StartedOn) return [];
 		const to = todayIsoDate();
-		return entries.filter(
-			(entry) => entry.recordedOn >= glp1StartedOn && entry.recordedOn <= to
-		);
+		return entries.filter((entry) => entry.recordedOn >= glp1StartedOn && entry.recordedOn <= to);
 	}
 	if (period.type === 'year') {
 		const prefix = `${period.year}-`;

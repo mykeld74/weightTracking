@@ -87,12 +87,7 @@
 		>
 			<span class="more-label">{moreLabel}</span>
 			<svg class="more-arrow" viewBox="0 0 12 12" aria-hidden="true">
-				<path
-					d="M2.5 4.5 L6 8 L9.5 4.5"
-					fill="none"
-					stroke="currentColor"
-					stroke-linecap="round"
-				/>
+				<path d="M2.5 4.5 L6 8 L9.5 4.5" fill="none" stroke="currentColor" stroke-linecap="round" />
 			</svg>
 		</button>
 		{#if menuOpen}
