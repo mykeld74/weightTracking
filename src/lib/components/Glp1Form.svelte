@@ -70,9 +70,9 @@
 			<input
 				type="number"
 				name="dosage"
-				step="0.25"
-				min="0.05"
-				max="100"
+				step="0.5"
+				min="2.5"
+				max="15"
 				inputmode="decimal"
 				required
 				value={dosage}
