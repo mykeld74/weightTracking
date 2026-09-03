@@ -69,7 +69,7 @@
 		<input
 			type="number"
 			name={field.key}
-			step="0.1"
+			step={field.label === 'BMR' ? '1' : '0.1'}
 			inputmode="decimal"
 			value={fieldValue(field.key)}
 			oninput={(event) => (fieldEdits[field.key] = event.currentTarget.value)}
