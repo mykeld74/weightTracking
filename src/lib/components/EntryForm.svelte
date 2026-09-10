@@ -1,8 +1,19 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import { resolve } from '$app/paths';
 	import DatePicker from './DatePicker.svelte';
 	import { todayIsoDate } from '$lib/tracking/dates';
-	import type { FieldDef, TrackingEntry } from '$lib/tracking/fields';
+	import {
+		applyCompositionCalculations,
+		profileIsComplete,
+		type UserProfile
+	} from '$lib/tracking/compositionCalc';
+	import {
+		formatFieldValue,
+		isCompositionCalculatedKey,
+		type FieldDef,
+		type TrackingEntry
+	} from '$lib/tracking/fields';
 
 	let {
 		fields,
@@ -11,6 +22,7 @@
 		recordedOn = todayIsoDate(),
 		message = '',
 		primaryKeys,
+		profile = null,
 		onSaved,
 		onCancel
 	}: {
@@ -21,6 +33,7 @@
 		recordedOn?: string;
 		message?: string;
 		primaryKeys?: readonly string[];
+		profile?: UserProfile | null;
 		onSaved?: () => void;
 		onCancel?: () => void;
 	} = $props();
@@ -29,11 +42,13 @@
 	let pickedDate = $state<string | undefined>();
 	let saving = $state(false);
 	let selectedDate = $derived(pickedDate ?? entry?.recordedOn ?? recordedOn);
+	let inputFields = $derived(fields.filter((field) => !isCompositionCalculatedKey(field.key)));
+	let calculatedFields = $derived(fields.filter((field) => isCompositionCalculatedKey(field.key)));
 	let primaryFields = $derived(
-		primaryKeys ? fields.filter((field) => primaryKeys.includes(field.key)) : fields
+		primaryKeys ? inputFields.filter((field) => primaryKeys.includes(field.key)) : inputFields
 	);
 	let extraFields = $derived(
-		primaryKeys ? fields.filter((field) => !primaryKeys.includes(field.key)) : []
+		primaryKeys ? inputFields.filter((field) => !primaryKeys.includes(field.key)) : []
 	);
 	let fieldEdits = $state<Record<string, string>>({});
 	let valuesSource = $derived(entry ?? defaults);
@@ -43,6 +58,25 @@
 		const value = valuesSource?.[key];
 		return typeof value === 'number' && Number.isFinite(value) ? String(value) : '';
 	}
+
+	let previewValues = $derived.by(() => {
+		const values: Record<string, number | null> = {};
+		for (const field of fields) {
+			const raw = fieldValue(field.key);
+			if (raw.trim() === '') {
+				values[field.key] = null;
+				continue;
+			}
+			const parsed = Number(raw);
+			values[field.key] = Number.isFinite(parsed) ? parsed : null;
+		}
+		if (!profile) return values;
+		return applyCompositionCalculations(values, profile, selectedDate);
+	});
+
+	let canPreviewCalcs = $derived(
+		Boolean(profile && (profileIsComplete(profile) || previewValues.weight != null))
+	);
 
 	function afterSave() {
 		saving = true;
@@ -69,8 +103,8 @@
 		<input
 			type="number"
 			name={field.key}
-			step={field.label === 'BMR' ? '1' : '0.1'}
-			inputmode="decimal"
+			step={field.decimals === 0 ? '1' : '0.1'}
+			inputmode={field.decimals === 0 ? 'numeric' : 'decimal'}
 			value={fieldValue(field.key)}
 			oninput={(event) => (fieldEdits[field.key] = event.currentTarget.value)}
 		/>
@@ -121,6 +155,35 @@
 					{@render fieldInput(field)}
 				{/each}
 			</div>
+		</details>
+	{/if}
+
+	{#if calculatedFields.length > 0}
+		<details class="more-details calculated-details" open>
+			<summary>Calculated automatically</summary>
+			{#if !profile || !profileIsComplete(profile)}
+				<p class="calc-hint">
+					Add your birthday, height, and gender in
+					<a href={resolve('/profile')}>Profile</a>
+					so BMI and BMR can be calculated. Fat mass and lean mass still update from weight and body fat.
+					Metabolic age comes from the scale export.
+				</p>
+			{/if}
+			<dl class="calc-grid">
+				{#each calculatedFields as field (field.key)}
+					{@const value = previewValues[field.key]}
+					<div>
+						<dt>{field.label}</dt>
+						<dd class="numeric">
+							{#if canPreviewCalcs && typeof value === 'number'}
+								{formatFieldValue(value, field)}
+							{:else}
+								—
+							{/if}
+						</dd>
+					</div>
+				{/each}
+			</dl>
 		</details>
 	{/if}
 </form>
@@ -203,5 +266,39 @@
 
 	.more-details .field-grid {
 		margin-top: 12px;
+	}
+
+	.calc-hint {
+		margin: 10px 0 0;
+		font-size: 0.86rem;
+		color: var(--ink-soft);
+		max-width: 42rem;
+	}
+
+	.calc-hint a {
+		color: var(--accent);
+	}
+
+	.calc-grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+		gap: 10px 16px;
+		margin: 12px 0 0;
+	}
+
+	.calc-grid div {
+		display: grid;
+		gap: 2px;
+	}
+
+	.calc-grid dt {
+		font-size: 0.78rem;
+		color: var(--ink-soft);
+	}
+
+	.calc-grid dd {
+		margin: 0;
+		font-size: 1.05rem;
+		font-weight: 650;
 	}
 </style>

@@ -1,4 +1,5 @@
 import type { User } from 'better-auth';
+import type { BiologicalSex } from './compositionCalc';
 
 export const userRoles = ['user', 'admin'] as const;
 
@@ -8,6 +9,9 @@ export type UserRole = (typeof userRoles)[number];
 export type AppUser = User & {
 	role: UserRole;
 	approvedAt: Date | null;
+	birthday?: string | null;
+	heightInches?: number | null;
+	gender?: BiologicalSex | null;
 };
 
 /** Account row as shown on the admin screen — no health data, ever. */

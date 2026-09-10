@@ -4,23 +4,32 @@ import type { Actions } from './$types';
 import { db } from '$lib/server/db';
 import { bodyComposition } from '$lib/server/db/schema';
 import { metricFormError, readEntryId, readMetricValues, readRecordedOn } from '$lib/server/form';
-import { compositionFields } from '$lib/tracking/fields';
+import { compositionFields, compositionInputFields } from '$lib/tracking/fields';
 import { parseMetricCsv } from '$lib/tracking/csv';
 import { requireApprovedUser } from '$lib/server/access';
 import { csvImportResult, importCompositionCsv, readCsvText } from '$lib/server/importEntries';
+import { loadUserProfile, withCompositionCalculations } from '$lib/server/profile';
 
 export const actions: Actions = {
 	save: async (event) => {
 		const user = requireApprovedUser(event);
+		const profile = await loadUserProfile(user.id);
 
 		const formData = await event.request.formData();
 		const recordedOn = readRecordedOn(formData);
 		if (!recordedOn) return metricFormError('Choose a valid date.');
 
-		const { values, filledCount } = readMetricValues(formData, compositionFields);
+		const { values: inputValues, filledCount } = readMetricValues(formData, compositionInputFields);
 		if (filledCount === 0) {
 			return metricFormError('Enter at least one measurement.', recordedOn);
 		}
+
+		// Start from nulls for every composition column, then overlay inputs + calcs.
+		const base: Record<string, number | null> = {};
+		for (const field of compositionFields) {
+			base[field.key] = null;
+		}
+		const values = withCompositionCalculations({ ...base, ...inputValues }, profile, recordedOn);
 
 		const id = readEntryId(formData);
 		if (id) {
@@ -83,10 +92,12 @@ export const actions: Actions = {
 	},
 	importCsv: async (event) => {
 		const user = requireApprovedUser(event);
+		const profile = await loadUserProfile(user.id);
 		const formData = await event.request.formData();
 		const file = await readCsvText(formData);
 		if (!file.ok) return fail(400, { importMessage: file.importMessage });
 
+		// Parse against all headers so scale exports still match, then overwrite calcs.
 		const parsed = parseMetricCsv(file.text, compositionFields);
 		if (parsed.rows.length === 0) {
 			return fail(400, {
@@ -94,7 +105,12 @@ export const actions: Actions = {
 			});
 		}
 
-		await importCompositionCsv(user.id, parsed.rows);
-		return csvImportResult(parsed.rows.length, parsed.errors);
+		const rows = parsed.rows.map((row) => ({
+			recordedOn: row.recordedOn,
+			values: withCompositionCalculations(row.values, profile, row.recordedOn)
+		}));
+
+		await importCompositionCsv(user.id, rows);
+		return csvImportResult(rows.length, parsed.errors);
 	}
 };

@@ -12,7 +12,7 @@
 
 	let open = $state(false);
 	let inviteActive = $derived(page.url.pathname.startsWith('/invite'));
-	let passwordActive = $derived(page.url.pathname.startsWith('/account'));
+	let passwordActive = $derived(page.url.pathname.startsWith('/profile'));
 	let accountsActive = $derived(page.url.pathname.startsWith('/admin'));
 
 	function toggle(event: MouseEvent) {
@@ -53,11 +53,11 @@
 			</a>
 			<a
 				class={{ active: passwordActive }}
-				href={resolve('/account')}
+				href={resolve('/profile')}
 				role="menuitem"
 				onclick={close}
 			>
-				Change password
+				Profile
 			</a>
 			{#if admin}
 				<a

@@ -136,6 +136,7 @@
 				defaults={latestEntry}
 				recordedOn={form?.recordedOn}
 				message={form?.message}
+				profile={data.profile}
 				onSaved={() => (editingEntry = null)}
 				onCancel={() => (editingEntry = null)}
 			/>

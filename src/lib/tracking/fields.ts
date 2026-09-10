@@ -1,3 +1,5 @@
+import { compositionCalculatedKeys, compositionInputKeys } from './compositionCalc';
+
 export type FieldDef = {
 	key: string;
 	label: string;
@@ -22,6 +24,20 @@ export const compositionFields = [
 	{ key: 'fatContent', label: 'Fat Content', unit: 'lbs', decimals: 1 },
 	{ key: 'subcutaneousFat', label: 'Subcutaneous Fat', unit: '%', decimals: 1 }
 ] as const satisfies readonly FieldDef[];
+
+const calculatedKeySet = new Set<string>(compositionCalculatedKeys);
+
+export const compositionInputFields = compositionFields.filter((field) =>
+	(compositionInputKeys as readonly string[]).includes(field.key)
+);
+
+export const compositionCalculatedFields = compositionFields.filter((field) =>
+	calculatedKeySet.has(field.key)
+);
+
+export function isCompositionCalculatedKey(key: string): boolean {
+	return calculatedKeySet.has(key);
+}
 
 export const measurementFields = [
 	{ key: 'chest', label: 'Chest', unit: 'in', decimals: 1 },

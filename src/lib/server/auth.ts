@@ -41,6 +41,21 @@ export const auth = betterAuth({
 				type: 'date',
 				required: false,
 				input: false
+			},
+			birthday: {
+				type: 'string',
+				required: false,
+				input: false
+			},
+			heightInches: {
+				type: 'number',
+				required: false,
+				input: false
+			},
+			gender: {
+				type: 'string',
+				required: false,
+				input: false
 			}
 		}
 	},

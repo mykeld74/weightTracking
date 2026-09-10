@@ -3,6 +3,7 @@ import { db } from '$lib/server/db';
 import { bodyComposition, bodyMeasurement } from '$lib/server/db/schema';
 import { maxCsvBytes, type ParsedCsvRow } from '$lib/tracking/csv';
 import type { FieldDef } from '$lib/tracking/fields';
+import { compositionCalculatedKeys } from '$lib/tracking/compositionCalc';
 import { compositionFields, measurementFields } from '$lib/tracking/fields';
 
 export async function readCsvText(
@@ -28,12 +29,18 @@ function importSummary(count: number, errors: string[]): string {
 
 function coalesceExcluded(
 	table: typeof bodyComposition | typeof bodyMeasurement,
-	fields: readonly FieldDef[]
+	fields: readonly FieldDef[],
+	forceKeys: readonly string[] = []
 ) {
+	const force = new Set(forceKeys);
 	const set: Record<string, ReturnType<typeof sql>> = {};
 	for (const field of fields) {
 		const column = table[field.key as keyof typeof table] as { name: string };
-		set[field.key] = sql`coalesce(excluded.${sql.identifier(column.name)}, ${column})`;
+		if (force.has(field.key)) {
+			set[field.key] = sql`excluded.${sql.identifier(column.name)}`;
+		} else {
+			set[field.key] = sql`coalesce(excluded.${sql.identifier(column.name)}, ${column})`;
+		}
 	}
 	return set;
 }
@@ -62,7 +69,7 @@ export async function importCompositionCsv(userId: string, rows: ParsedCsvRow[])
 			.values(chunk)
 			.onConflictDoUpdate({
 				target: [bodyComposition.userId, bodyComposition.recordedOn],
-				set: coalesceExcluded(bodyComposition, compositionFields)
+				set: coalesceExcluded(bodyComposition, compositionFields, compositionCalculatedKeys)
 			});
 	}, values);
 }

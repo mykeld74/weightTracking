@@ -1,4 +1,14 @@
-import { bigint, boolean, index, integer, pgTable, text, timestamp } from 'drizzle-orm/pg-core';
+import {
+	bigint,
+	boolean,
+	date,
+	index,
+	integer,
+	pgTable,
+	real,
+	text,
+	timestamp
+} from 'drizzle-orm/pg-core';
 
 export const user = pgTable('user', {
 	id: text('id').primaryKey(),
@@ -13,6 +23,10 @@ export const user = pgTable('user', {
 		.notNull(),
 	// Null until an invited signup (or an admin) approves the account.
 	approvedAt: timestamp('approved_at'),
+	// Body profile used for BMI / BMR / metabolic age calculations.
+	birthday: date('birthday', { mode: 'string' }),
+	heightInches: real('height_inches'),
+	gender: text('gender', { enum: ['male', 'female'] }),
 	createdAt: timestamp('created_at').defaultNow().notNull(),
 	updatedAt: timestamp('updated_at')
 		.defaultNow()
