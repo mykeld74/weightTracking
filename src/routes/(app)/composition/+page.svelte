@@ -1,7 +1,9 @@
 <script lang="ts">
 	import CsvImport from '$lib/components/CsvImport.svelte';
+	import DataExport from '$lib/components/DataExport.svelte';
 	import EntryForm from '$lib/components/EntryForm.svelte';
 	import EntryList from '$lib/components/EntryList.svelte';
+	import GoalProgressCard from '$lib/components/GoalProgressCard.svelte';
 	import MetricCharts from '$lib/components/MetricCharts.svelte';
 	import MetricTabs from '$lib/components/MetricTabs.svelte';
 	import PeriodTabs from '$lib/components/PeriodTabs.svelte';
@@ -22,6 +24,10 @@
 		type PeriodSelection,
 		type WeekdayKey
 	} from '$lib/tracking/period';
+	import {
+		averageWeeklyChange,
+		pointsForField
+	} from '$lib/tracking/stats';
 	import Skeleton from '$lib/components/Skeleton.svelte';
 	import { asyncData } from '$lib/client/asyncData.svelte';
 	import type { ActionData, PageData } from './$types';
@@ -65,6 +71,12 @@
 			? [...entries].sort((a, b) => b.recordedOn.localeCompare(a.recordedOn))[0]
 			: null
 	);
+	let weightPoints = $derived(pointsForField(visibleEntries, 'weight'));
+	let weeklyWeightChange = $derived(averageWeeklyChange(weightPoints));
+	let latestWeight = $derived(
+		weightPoints.length > 0 ? weightPoints[weightPoints.length - 1].value : null
+	);
+	let targetWeight = $derived(data.profile?.targetWeight ?? null);
 
 	function editEntry(entry: TrackingEntry) {
 		editingEntry = entry;
@@ -98,6 +110,11 @@
 		</div>
 		{#if history.current}
 			<div class={{ revalidating: history.isStale }}>
+				<GoalProgressCard
+					currentWeight={latestWeight}
+					{targetWeight}
+					weeklyChange={weeklyWeightChange}
+				/>
 				<MetricCharts
 					entries={visibleEntries}
 					fields={compositionFields}
@@ -146,6 +163,12 @@
 				fields={compositionFields}
 				message={form?.importMessage}
 				count={form?.importCount}
+			/>
+			<DataExport
+				{entries}
+				rangeEntries={visibleEntries}
+				fields={compositionFields}
+				filenamePrefix="body-ledger-composition"
 			/>
 		{/if}
 	</section>

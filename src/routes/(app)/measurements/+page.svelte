@@ -1,5 +1,6 @@
 <script lang="ts">
 	import CsvImport from '$lib/components/CsvImport.svelte';
+	import DataExport from '$lib/components/DataExport.svelte';
 	import EntryForm from '$lib/components/EntryForm.svelte';
 	import EntryList from '$lib/components/EntryList.svelte';
 	import MetricCharts from '$lib/components/MetricCharts.svelte';
@@ -134,6 +135,12 @@
 				fields={measurementFields}
 				message={form?.importMessage}
 				count={form?.importCount}
+			/>
+			<DataExport
+				{entries}
+				rangeEntries={visibleEntries}
+				fields={measurementFields}
+				filenamePrefix="body-ledger-measurements"
 			/>
 		{/if}
 	</section>

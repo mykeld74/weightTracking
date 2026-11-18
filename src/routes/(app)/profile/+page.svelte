@@ -6,7 +6,7 @@
 	let { data, form }: { data: PageData; form: ActionData } = $props();
 
 	let profileKey = $derived(
-		`${data.profile.birthday ?? ''}:${data.profile.heightInches ?? ''}:${data.profile.gender ?? ''}`
+		`${data.profile.birthday ?? ''}:${data.profile.heightInches ?? ''}:${data.profile.gender ?? ''}:${data.profile.targetWeight ?? ''}`
 	);
 </script>
 
@@ -20,8 +20,8 @@
 			<div>
 				<h2>Body profile</h2>
 				<p>
-					Birthday, height, and sex power automatic BMI, BMR, and metabolic age on composition
-					entries.
+					Birthday, height, and sex power automatic BMI and BMR. Target weight drives goal progress
+					on Composition.
 				</p>
 			</div>
 		</div>
@@ -33,6 +33,7 @@
 				birthday={data.profile.birthday}
 				heightInches={data.profile.heightInches}
 				gender={data.profile.gender}
+				targetWeight={data.profile.targetWeight}
 				message={form?.profileMessage && form?.success ? form.profileMessage : ''}
 			/>
 		{/key}

@@ -1,4 +1,4 @@
-import { calendarDaysBetween, weekStartIso } from './dates';
+import { addDaysIso, calendarDaysBetween, todayIsoDate, weekStartIso } from './dates';
 
 export type RangeStats = {
 	high: number;
@@ -70,6 +70,69 @@ export function pointsForField(entries: Array<Record<string, unknown>>, key: str
 	}
 
 	return points.sort((a, b) => a.date.localeCompare(b.date));
+}
+
+export type GoalProgress = {
+	currentWeight: number;
+	targetWeight: number;
+	remainingLbs: number;
+	/** Positive when moving toward the goal at `weeklyChange`. */
+	weeksRemaining: number | null;
+	etaDate: string | null;
+	reached: boolean;
+	direction: 'loss' | 'gain';
+};
+
+/** Distance to target weight and ETA from the current weekly rate. */
+export function computeGoalProgress(
+	currentWeight: number,
+	targetWeight: number,
+	weeklyChange: number | null,
+	asOf = todayIsoDate()
+): GoalProgress {
+	const remainingLbs = targetWeight - currentWeight;
+	const direction: 'loss' | 'gain' = targetWeight < currentWeight ? 'loss' : 'gain';
+	const reached = Math.abs(remainingLbs) < 0.05;
+
+	if (reached || weeklyChange == null || weeklyChange === 0) {
+		return {
+			currentWeight,
+			targetWeight,
+			remainingLbs,
+			weeksRemaining: reached ? 0 : null,
+			etaDate: reached ? asOf : null,
+			reached,
+			direction
+		};
+	}
+
+	const movingTowardGoal =
+		(direction === 'loss' && weeklyChange < 0) || (direction === 'gain' && weeklyChange > 0);
+
+	if (!movingTowardGoal) {
+		return {
+			currentWeight,
+			targetWeight,
+			remainingLbs,
+			weeksRemaining: null,
+			etaDate: null,
+			reached: false,
+			direction
+		};
+	}
+
+	const weeksRemaining = Math.abs(remainingLbs) / Math.abs(weeklyChange);
+	const etaDate = addDaysIso(asOf, Math.ceil(weeksRemaining * 7));
+
+	return {
+		currentWeight,
+		targetWeight,
+		remainingLbs,
+		weeksRemaining,
+		etaDate,
+		reached: false,
+		direction
+	};
 }
 
 /** One point per Sunday–Saturday week, plotted on the last day logged that week. */

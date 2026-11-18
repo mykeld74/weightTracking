@@ -56,6 +56,11 @@ export const auth = betterAuth({
 				type: 'string',
 				required: false,
 				input: false
+			},
+			targetWeight: {
+				type: 'number',
+				required: false,
+				input: false
 			}
 		}
 	},

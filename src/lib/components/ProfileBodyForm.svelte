@@ -10,11 +10,13 @@
 		birthday: initialBirthday = null,
 		heightInches = null,
 		gender: initialGender = null,
+		targetWeight = null,
 		message = ''
 	}: {
 		birthday?: string | null;
 		heightInches?: number | null;
 		gender?: BiologicalSex | null;
+		targetWeight?: number | null;
 		message?: string;
 	} = $props();
 
@@ -107,6 +109,19 @@
 			</label>
 		</div>
 	</fieldset>
+	<label class="field">
+		Target weight (lbs)
+		<input
+			type="number"
+			name="targetWeight"
+			step="0.1"
+			min="50"
+			max="700"
+			inputmode="decimal"
+			placeholder="e.g. 210"
+			value={targetWeight ?? ''}
+		/>
+	</label>
 	<div class="auth-actions">
 		<button class="primary-btn" type="submit" disabled={saving} aria-busy={saving}>
 			{saving ? 'Saving…' : 'Save profile'}

@@ -341,7 +341,7 @@ select:focus {
 }
 
 .history-block h1 {
-	margin: 8px 0 4px;
+	margin: 4px 0 12px;
 	font-size: 2.4rem;
 	font-weight: 700;
 	letter-spacing: -0.04em;
@@ -351,7 +351,7 @@ select:focus {
 .period-tabs {
 	display: flex;
 	flex-wrap: wrap;
-	gap: 8px 28px;
+	gap: 8px 24px;
 	margin: 8px 0 0;
 	border-bottom: 1px solid var(--line);
 }
@@ -368,15 +368,17 @@ select:focus {
 	.history-filters {
 		display: flex;
 		flex-wrap: wrap;
-		align-items: flex-end;
+		align-items: stretch;
+		gap: 0;
 		border-bottom: 1px solid var(--line);
-		margin: 4px 0 18px;
+		margin: 0 0 22px;
 	}
 
 	.history-filters .period-tabs {
 		margin: 0;
 		border-bottom: none;
-		gap: 8px 20px;
+		gap: 4px 18px;
+		align-items: flex-end;
 	}
 
 	.history-filters .period-tabs:last-of-type {
@@ -385,32 +387,38 @@ select:focus {
 
 	.history-filters .period-tabs > button,
 	.history-filters .metric-more > button {
-		padding-top: 6px;
-		padding-bottom: 8px;
+		padding-top: 10px;
+		padding-bottom: 12px;
 	}
 
 	.history-filters > .period-tabs:not(.metric-tabs):not(.weekday-tabs) {
 		order: 1;
+		flex: 1 1 auto;
+		min-width: 0;
 	}
 
 	.history-filters .weekday-tabs {
 		order: 2;
-		padding-left: 24px;
-		margin-left: 24px;
+		flex: 0 1 auto;
+		padding-left: 20px;
+		margin-left: 8px;
 		border-left: 1px solid var(--line);
+		gap: 4px 14px;
 	}
 
 	.history-filters .metric-tabs {
 		order: 3;
 		flex: 1 1 100%;
 		border-top: 1px solid var(--line);
+		padding-top: 2px;
+		margin-top: 2px;
 	}
 
 	.history-filters .period-custom {
 		flex: 1 1 100%;
 		order: 4;
-		margin-top: 8px;
-		margin-bottom: 8px;
+		margin-top: 12px;
+		margin-bottom: 10px;
 	}
 }
 
@@ -443,7 +451,7 @@ select:focus {
 	position: absolute;
 	left: 0;
 	right: 0;
-	bottom: -1px;
+	bottom: 0;
 	height: 3px;
 	background: var(--tab-color, var(--accent));
 	border-radius: 3px 3px 0 0;
@@ -493,14 +501,14 @@ select:focus {
 .summary-grid {
 	display: grid;
 	grid-template-columns: repeat(5, minmax(0, 1fr));
-	gap: 12px;
-	margin-bottom: 12px;
+	gap: 14px;
+	margin-bottom: 16px;
 }
 
 .summary-card {
 	background: var(--bg-elev);
 	border-radius: 14px;
-	padding: 16px 18px 14px;
+	padding: 18px 18px 16px;
 }
 
 .summary-card span {
@@ -528,7 +536,6 @@ select:focus {
 }
 
 .summary-card small.weekly-change {
-	margin-bottom: 2px;
 	font-variant-numeric: tabular-nums;
 }
 

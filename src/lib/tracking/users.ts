@@ -12,6 +12,7 @@ export type AppUser = User & {
 	birthday?: string | null;
 	heightInches?: number | null;
 	gender?: BiologicalSex | null;
+	targetWeight?: number | null;
 };
 
 /** Account row as shown on the admin screen — no health data, ever. */

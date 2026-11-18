@@ -27,6 +27,7 @@ export const actions: Actions = {
 		const heightFeet = parseOptionalNumber(formData.get('heightFeet'));
 		const heightInchesPart = parseOptionalNumber(formData.get('heightInchesPart'));
 		const heightInches = inchesFromFeetAndInches(heightFeet, heightInchesPart);
+		const targetWeight = parseOptionalNumber(formData.get('targetWeight'));
 
 		const birthday = birthdayRaw === '' ? null : birthdayRaw;
 		if (birthday && !isIsoDate(birthday)) {
@@ -45,6 +46,9 @@ export const actions: Actions = {
 		if (heightInches != null && (heightInches < 36 || heightInches > 96)) {
 			return fail(400, { profileMessage: 'Height should be between 3′0″ and 8′0″.' });
 		}
+		if (targetWeight != null && (targetWeight < 50 || targetWeight > 700)) {
+			return fail(400, { profileMessage: 'Target weight should be between 50 and 700 lbs.' });
+		}
 
 		const gender = genderRaw === '' ? null : genderRaw;
 		if (gender && !isBiologicalSex(gender)) {
@@ -62,7 +66,8 @@ export const actions: Actions = {
 			.set({
 				birthday: profile.birthday,
 				heightInches: profile.heightInches,
-				gender: profile.gender
+				gender: profile.gender,
+				targetWeight
 			})
 			.where(eq(user.id, current.id));
 

@@ -27,6 +27,60 @@ export function csvTemplate(fields: readonly FieldDef[]): string {
 	return ['recordedOn', ...fields.map((field) => field.key)].join(',') + '\n';
 }
 
+function csvEscape(value: string): string {
+	if (/[",\n\r]/.test(value)) return `"${value.replace(/"/g, '""')}"`;
+	return value;
+}
+
+/** Full history export — one row per entry, keys matching the import template. */
+export function entriesToCsv(
+	entries: Array<Record<string, unknown>>,
+	fields: readonly FieldDef[]
+): string {
+	const headers = ['recordedOn', ...fields.map((field) => field.key)];
+	const lines = [headers.join(',')];
+
+	const sorted = [...entries].sort((a, b) =>
+		String(a.recordedOn ?? '').localeCompare(String(b.recordedOn ?? ''))
+	);
+
+	for (const entry of sorted) {
+		const cells = [
+			csvEscape(String(entry.recordedOn ?? '')),
+			...fields.map((field) => {
+				const raw = entry[field.key];
+				if (typeof raw !== 'number' || !Number.isFinite(raw)) return '';
+				return String(raw);
+			})
+		];
+		lines.push(cells.join(','));
+	}
+
+	return lines.join('\n') + '\n';
+}
+
+export function entriesToJson(
+	entries: Array<Record<string, unknown>>,
+	fields: readonly FieldDef[]
+): string {
+	const sorted = [...entries].sort((a, b) =>
+		String(a.recordedOn ?? '').localeCompare(String(b.recordedOn ?? ''))
+	);
+
+	const rows = sorted.map((entry) => {
+		const row: Record<string, string | number | null> = {
+			recordedOn: typeof entry.recordedOn === 'string' ? entry.recordedOn : ''
+		};
+		for (const field of fields) {
+			const raw = entry[field.key];
+			row[field.key] = typeof raw === 'number' && Number.isFinite(raw) ? raw : null;
+		}
+		return row;
+	});
+
+	return `${JSON.stringify(rows, null, 2)}\n`;
+}
+
 export function normalizeCsvHeader(value: string): string {
 	return value
 		.trim()

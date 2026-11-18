@@ -10,7 +10,11 @@ import {
 import { compositionFields } from '$lib/tracking/fields';
 import type { AppUser } from '$lib/tracking/users';
 
-export function profileFromUser(userRow: AppUser): UserProfile {
+export type AppProfile = UserProfile & {
+	targetWeight: number | null;
+};
+
+export function profileFromUser(userRow: AppUser): AppProfile {
 	const gender = userRow.gender;
 	return {
 		birthday: userRow.birthday ?? null,
@@ -18,29 +22,38 @@ export function profileFromUser(userRow: AppUser): UserProfile {
 			typeof userRow.heightInches === 'number' && Number.isFinite(userRow.heightInches)
 				? userRow.heightInches
 				: null,
-		gender: typeof gender === 'string' && isBiologicalSex(gender) ? gender : null
+		gender: typeof gender === 'string' && isBiologicalSex(gender) ? gender : null,
+		targetWeight:
+			typeof userRow.targetWeight === 'number' && Number.isFinite(userRow.targetWeight)
+				? userRow.targetWeight
+				: null
 	};
 }
 
-export async function loadUserProfile(userId: string): Promise<UserProfile> {
+export async function loadUserProfile(userId: string): Promise<AppProfile> {
 	const [row] = await db
 		.select({
 			birthday: user.birthday,
 			heightInches: user.heightInches,
-			gender: user.gender
+			gender: user.gender,
+			targetWeight: user.targetWeight
 		})
 		.from(user)
 		.where(eq(user.id, userId))
 		.limit(1);
 
 	if (!row) {
-		return { birthday: null, heightInches: null, gender: null };
+		return { birthday: null, heightInches: null, gender: null, targetWeight: null };
 	}
 
 	return {
 		birthday: row.birthday ?? null,
 		heightInches: row.heightInches ?? null,
-		gender: row.gender && isBiologicalSex(row.gender) ? row.gender : null
+		gender: row.gender && isBiologicalSex(row.gender) ? row.gender : null,
+		targetWeight:
+			typeof row.targetWeight === 'number' && Number.isFinite(row.targetWeight)
+				? row.targetWeight
+				: null
 	};
 }
 

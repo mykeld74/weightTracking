@@ -82,3 +82,27 @@ export function downloadBlob(blob: Blob, filename: string): void {
 	document.body.removeChild(anchor);
 	setTimeout(() => URL.revokeObjectURL(url), 2000);
 }
+
+function photoDayKey(recordedOn: string): string {
+	return recordedOn.slice(0, 10);
+}
+
+/** Nearest earlier day that has the same pose/view. */
+export function previousSameViewPhoto(
+	days: PhotoDay[],
+	recordedOn: string,
+	view: PhotoView
+): PhotoMeta | null {
+	const target = photoDayKey(recordedOn);
+	const chronological = [...days].sort((a, b) =>
+		photoDayKey(a.recordedOn).localeCompare(photoDayKey(b.recordedOn))
+	);
+	const index = chronological.findIndex((day) => photoDayKey(day.recordedOn) === target);
+	if (index <= 0) return null;
+
+	for (let i = index - 1; i >= 0; i -= 1) {
+		const photo = chronological[i].photos[view];
+		if (photo) return photo;
+	}
+	return null;
+}

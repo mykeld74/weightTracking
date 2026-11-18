@@ -1,6 +1,9 @@
 <script lang="ts">
+	import { deserialize } from '$app/forms';
+	import { invalidateAll } from '$app/navigation';
 	import PhotoCropper from './PhotoCropper.svelte';
 	import PhotoLightbox from './PhotoLightbox.svelte';
+	import { compressImage } from '$lib/tracking/compressImage';
 	import { formatDisplayDate, formatShortDate } from '$lib/tracking/dates';
 	import {
 		downloadPhoto,
@@ -9,6 +12,7 @@
 		photoThumbSrc,
 		photoViewLabels,
 		photoViews,
+		previousSameViewPhoto,
 		type PhotoDay,
 		type PhotoMeta,
 		type PhotoView
@@ -65,6 +69,48 @@
 		null
 	);
 	let downloadingAll = $state(false);
+	let savingCrop = $state(false);
+	let cropError = $state('');
+
+	async function saveCroppedPhoto(file: File) {
+		const active = cropper;
+		if (!active || savingCrop) return;
+
+		savingCrop = true;
+		cropError = '';
+		try {
+			const { image, thumb } = await compressImage(file);
+			const formData = new FormData();
+			formData.set('recordedOn', active.recordedOn);
+			formData.set('view', active.view);
+			formData.set('image', image);
+			formData.set('thumb', thumb);
+
+			const response = await fetch('?/save', {
+				method: 'POST',
+				body: formData
+			});
+			const result = deserialize(await response.text());
+			if (result.type !== 'success') {
+				const message =
+					result.type === 'failure' &&
+					result.data &&
+					typeof result.data === 'object' &&
+					'message' in result.data &&
+					typeof result.data.message === 'string'
+						? result.data.message
+						: 'Could not save that crop.';
+				throw new Error(message);
+			}
+
+			cropper = null;
+			await invalidateAll();
+		} catch (caught) {
+			cropError = caught instanceof Error ? caught.message : 'Could not save that crop.';
+		} finally {
+			savingCrop = false;
+		}
+	}
 
 	// Sorted in chronological order for clear progression
 	let sortedSelectedDates = $derived([...selectedDates].sort((a, b) => a.localeCompare(b)));
@@ -410,10 +456,13 @@
 
 <!-- Lightbox Modal -->
 {#if lightbox}
+	{@const ghost = previousSameViewPhoto(days, lightbox.recordedOn, lightbox.view)}
 	<PhotoLightbox
 		src={lightbox.src}
 		label={lightbox.label}
 		filename={photoFileName(lightbox.recordedOn, lightbox.view)}
+		ghostSrc={ghost ? photoSrc(ghost) : null}
+		ghostLabel={ghost ? ghost.recordedOn.slice(0, 10) : 'Previous'}
 		onCrop={() => {
 			const active = lightbox;
 			if (active) {
@@ -428,17 +477,23 @@
 	/>
 {/if}
 
+{#if cropError}
+	<p class="flash crop-flash">{cropError}</p>
+{/if}
+
 <!-- Cropper Modal -->
 {#if cropper}
 	<PhotoCropper
 		src={cropper.src}
-		label={cropper.label}
+		label={savingCrop ? `${cropper.label} · Saving…` : cropper.label}
 		recordedOn={cropper.recordedOn}
 		view={cropper.view}
-		onSave={async () => {
+		onSave={saveCroppedPhoto}
+		onCancel={() => {
+			if (savingCrop) return;
 			cropper = null;
+			cropError = '';
 		}}
-		onCancel={() => (cropper = null)}
 	/>
 {/if}
 
@@ -447,6 +502,10 @@
 		display: flex;
 		flex-direction: column;
 		gap: 16px;
+	}
+
+	.crop-flash {
+		margin: 0;
 	}
 
 	.compare-header {

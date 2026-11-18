@@ -63,10 +63,13 @@
 							<small class="weekly-change"
 								>{signedValue(weeklyChange, rateDecimals)}{field.unit
 									? ` ${field.unit}`
-									: ''} / week</small
+									: ''} / week · {formatShortDate(stats.first.date)} → {formatShortDate(
+									stats.last.date
+								)}</small
 							>
+						{:else}
+							<small>{formatShortDate(stats.first.date)} → {formatShortDate(stats.last.date)}</small>
 						{/if}
-						<small>{formatShortDate(stats.first.date)} → {formatShortDate(stats.last.date)}</small>
 					</article>
 					<article class="summary-card latest">
 						<span>Latest</span>

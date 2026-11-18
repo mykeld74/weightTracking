@@ -53,9 +53,10 @@
 		<span class="weekly-full">Weekly avg</span>
 		<span class="weekly-short">Week</span>
 	</button>
+	<span class="day-sep" aria-hidden="true"></span>
 	{#each weekdayOptions as day (day.key)}
 		<button
-			class={{ active: selectedDay === day.key }}
+			class={['day-btn', { active: selectedDay === day.key }]}
 			type="button"
 			role="tab"
 			aria-selected={selectedDay === day.key}
@@ -75,6 +76,18 @@
 	.weekday-tabs button {
 		flex: none;
 		white-space: nowrap;
+	}
+
+	.day-sep {
+		align-self: stretch;
+		width: 1px;
+		margin: 10px 2px 12px;
+		background: var(--line);
+	}
+
+	.day-btn {
+		min-width: 1.6em;
+		text-align: center;
 	}
 
 	.weekly-short {

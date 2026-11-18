@@ -152,7 +152,7 @@
 				<h2>Progress photos</h2>
 				<p>
 					{#if activeTab === 'session'}
-						Choose a file or take a photo for each view. Saving the same view replaces it.
+						Choose a file or take a photo for each view. Open a photo to ghost the previous same pose.
 					{:else}
 						Compare photos across up to 4 dates side-by-side to track changes over time.
 					{/if}
@@ -207,7 +207,12 @@
 					</form>
 				{/if}
 			</div>
-			<PhotoGrid {recordedOn} photos={selectedDay?.photos ?? {}} message={form?.message} />
+			<PhotoGrid
+				{recordedOn}
+				photos={selectedDay?.photos ?? {}}
+				{days}
+				message={form?.message}
+			/>
 		{:else}
 			<PhotoCompare {days} onSelectSession={openSessionFromCompare} />
 		{/if}

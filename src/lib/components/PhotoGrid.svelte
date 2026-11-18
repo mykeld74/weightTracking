@@ -10,6 +10,8 @@
 		photoSrc,
 		photoViewLabels,
 		photoViews,
+		previousSameViewPhoto,
+		type PhotoDay,
 		type PhotoMeta,
 		type PhotoView
 	} from '$lib/tracking/photos';
@@ -17,10 +19,12 @@
 	let {
 		recordedOn,
 		photos,
+		days = [],
 		message = ''
 	}: {
 		recordedOn: string;
 		photos: Partial<Record<PhotoView, PhotoMeta>>;
+		days?: PhotoDay[];
 		message?: string;
 	} = $props();
 
@@ -288,10 +292,13 @@
 
 {#if lightbox}
 	{@const currentView = lightbox.view}
+	{@const ghost = previousSameViewPhoto(days, recordedOn, currentView)}
 	<PhotoLightbox
 		src={lightbox.src}
 		label={lightbox.label}
 		filename={photoFileName(recordedOn, currentView)}
+		ghostSrc={ghost ? photoSrc(ghost) : null}
+		ghostLabel={ghost ? ghost.recordedOn.slice(0, 10) : 'Previous'}
 		onCrop={() => startCrop(currentView)}
 		onClose={() => (lightbox = null)}
 	/>

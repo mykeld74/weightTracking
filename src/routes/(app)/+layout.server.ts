@@ -21,6 +21,7 @@ export const load: LayoutServerLoad = async (event) => {
 			birthday: profile.birthday,
 			heightInches: profile.heightInches,
 			gender: profile.gender,
+			targetWeight: profile.targetWeight,
 			age
 		}
 	};

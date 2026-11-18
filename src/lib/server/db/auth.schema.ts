@@ -27,6 +27,7 @@ export const user = pgTable('user', {
 	birthday: date('birthday', { mode: 'string' }),
 	heightInches: real('height_inches'),
 	gender: text('gender', { enum: ['male', 'female'] }),
+	targetWeight: real('target_weight'),
 	createdAt: timestamp('created_at').defaultNow().notNull(),
 	updatedAt: timestamp('updated_at')
 		.defaultNow()
