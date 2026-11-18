@@ -522,15 +522,23 @@ select:focus {
 }
 
 .summary-card small {
+	display: block;
 	color: var(--ink-soft);
 	font-size: 0.86rem;
 }
 
-.summary-card.down strong {
+.summary-card small.weekly-change {
+	margin-bottom: 2px;
+	font-variant-numeric: tabular-nums;
+}
+
+.summary-card.down strong,
+.summary-card.down small.weekly-change {
 	color: var(--teal);
 }
 
-.summary-card.up strong {
+.summary-card.up strong,
+.summary-card.up small.weekly-change {
 	color: var(--accent);
 }
 

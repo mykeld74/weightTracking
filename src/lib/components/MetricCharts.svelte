@@ -1,7 +1,12 @@
 <script lang="ts">
 	import LineChart from './LineChart.svelte';
 	import { formatShortDate } from '$lib/tracking/dates';
-	import { computeRangeStats, pointsForField, weeklyAveragePoints } from '$lib/tracking/stats';
+	import {
+		averageWeeklyChange,
+		computeRangeStats,
+		pointsForField,
+		weeklyAveragePoints
+	} from '$lib/tracking/stats';
 	import type { FieldDef, TrackingEntry } from '$lib/tracking/fields';
 	import type { ChartGrain } from '$lib/tracking/period';
 
@@ -26,9 +31,12 @@
 	let dailyPoints = $derived(field ? pointsForField(entries, field.key) : []);
 	let points = $derived(grain === 'week' ? weeklyAveragePoints(dailyPoints) : dailyPoints);
 	let stats = $derived(computeRangeStats(points));
+	// Always use daily logs so chart grain doesn't distort lbs/week.
+	let weeklyChange = $derived(averageWeeklyChange(dailyPoints));
+	let rateDecimals = $derived(field ? Math.max(field.decimals, 2) : 2);
 
-	function signedValue(value: number, field: FieldDef) {
-		const formatted = Math.abs(value).toFixed(field.decimals);
+	function signedValue(value: number, decimals: number) {
+		const formatted = Math.abs(value).toFixed(decimals);
 		if (value > 0) return `+${formatted}`;
 		if (value < 0) return `−${formatted}`;
 		return formatted;
@@ -50,7 +58,14 @@
 				<div class="summary-grid">
 					<article class={['summary-card', changeTone(stats.change)]}>
 						<span>Change</span>
-						<strong class="numeric">{signedValue(stats.change, field)}</strong>
+						<strong class="numeric">{signedValue(stats.change, field.decimals)}</strong>
+						{#if weeklyChange != null}
+							<small class="weekly-change"
+								>{signedValue(weeklyChange, rateDecimals)}{field.unit
+									? ` ${field.unit}`
+									: ''} / week</small
+							>
+						{/if}
 						<small>{formatShortDate(stats.first.date)} → {formatShortDate(stats.last.date)}</small>
 					</article>
 					<article class="summary-card latest">

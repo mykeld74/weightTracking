@@ -1,4 +1,4 @@
-import { weekStartIso } from './dates';
+import { calendarDaysBetween, weekStartIso } from './dates';
 
 export type RangeStats = {
 	high: number;
@@ -10,12 +10,23 @@ export type RangeStats = {
 	first: ChartPoint;
 	last: ChartPoint;
 	change: number;
+	/** (last − first) / weeks between first and last log. */
+	weeklyChange: number | null;
 };
 
 export type ChartPoint = {
 	date: string;
 	value: number;
 };
+
+/** Average change per week from the first to last point. */
+export function averageWeeklyChange(points: ChartPoint[]): number | null {
+	if (points.length < 2) return null;
+	const first = points[0];
+	const last = points[points.length - 1];
+	const spanWeeks = Math.max(1 / 7, calendarDaysBetween(first.date, last.date) / 7);
+	return (last.value - first.value) / spanWeeks;
+}
 
 export function computeRangeStats(points: ChartPoint[]): RangeStats | null {
 	if (points.length === 0) return null;
@@ -42,7 +53,8 @@ export function computeRangeStats(points: ChartPoint[]): RangeStats | null {
 		count: points.length,
 		first,
 		last,
-		change: last.value - first.value
+		change: last.value - first.value,
+		weeklyChange: averageWeeklyChange(points)
 	};
 }
 

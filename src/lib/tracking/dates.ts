@@ -131,6 +131,13 @@ export function addDaysIso(isoDate: string, days: number): string {
 	return toIsoDate(parsed.getFullYear(), parsed.getMonth() + 1, parsed.getDate());
 }
 
+/** Whole calendar days from `fromIso` to `toIso` (can be negative). */
+export function calendarDaysBetween(fromIso: string, toIso: string): number {
+	const from = new Date(`${fromIso}T00:00:00`).getTime();
+	const to = new Date(`${toIso}T00:00:00`).getTime();
+	return Math.round((to - from) / 86_400_000);
+}
+
 /** Sunday-start week, matching the weekday tabs. */
 export function weekStartIso(isoDate: string): string {
 	const parsed = new Date(`${isoDate}T00:00:00`);
